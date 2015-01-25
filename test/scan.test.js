@@ -15,14 +15,12 @@ const cases = {
 };
 
 describe('scan', () => {
-  it('is a function', () => {
-    assert.hasType(Function, scan);
-  });
-
   each(cases, (expected, source) => {
     describe(JSON.stringify(source), () => {
       it('emits the correct tokens', () => {
         const tokens = scan(source);
+
+        assert.equal('Token count is correct', expected.length, tokens.length);
 
         each(expected, ([type, text], idx) => {
           assert.equal('Token type mismatch', type, tokens[idx].type);
@@ -30,5 +28,10 @@ describe('scan', () => {
         });
       });
     });
+  });
+
+  it('fails when strings ends suddenly', () => {
+    let err = assert.throws(() => scan('"foo'));
+    assert.include('Unexpected EOF', err.message);
   });
 });

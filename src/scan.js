@@ -1,11 +1,14 @@
 /* @flow */
+import {equal} from 'assert';
+
 import {Token, INT, CHAR, STRING} from './tokens';
 
 const debug = require('debug')('zbc:scan');
 
-const ROOT_STATE = 0;
-const CHAR_STATE = 1;
-const STRING_STATE = 2;
+const ROOT_STATE = 'ROOT';
+const CHAR_STATE = 'CHAR';
+const STRING_STATE = 'STRING';
+const NUMBER_STATE = 'NUMBER';
 
 function isDigit(c) {
   return c >= '0' && c <= '9';
@@ -38,6 +41,10 @@ function _scan(source: String) {
     return c;
   }
 
+  function isEOF() {
+    return idx >= source.length;
+  }
+
   function syntaxError(message) {
     const err = new SyntaxError(`${message} at ${start}..${idx}`);
     err.start = start;
@@ -45,9 +52,21 @@ function _scan(source: String) {
     return err;
   }
 
-  for (; idx < source.length; next()) {
+  function prettyCurrent() {
+    if (c === undefined) {
+      return 'EOF';
+    } else {
+      return `${JSON.stringify(c)} (${c.charCodeAt(0)})`;
+    }
+  }
+
+  for (; idx <= source.length; next()) {
+    debug('Reading %j at %j', c, idx);
+
     switch (state) {
       case ROOT_STATE:
+        if (isEOF()) continue;
+
         switch (c) {
           case '\'':
             enter(CHAR_STATE);
@@ -61,11 +80,7 @@ function _scan(source: String) {
         if (isWhitespace(c)) {
           continue; // skip
         } else if (isDigit(c)) {
-          start = idx;
-          while (next() !== undefined && isDigit(c)) {
-            // progress...
-          }
-          emit(INT);
+          enter(NUMBER_STATE);
           continue;
         }
         break;
@@ -75,17 +90,18 @@ function _scan(source: String) {
         if (text === '\\') {
           throw new Error('Not implemented');
         }
-        next();
-        if (c !== '\'') {
+        if (next() !== '\'') {
           throw syntaxError('Invalid character literal');
         }
         ++start;
         emit(CHAR);
-        ++idx; // we do actually want to skip the closing quote
+        ++idx; // We do actually want to skip the closing quote
         enter(ROOT_STATE);
         continue;
 
       case STRING_STATE:
+        if (isEOF()) break;
+
         switch (c) {
           case '\\':
             next();
@@ -97,11 +113,21 @@ function _scan(source: String) {
             enter(ROOT_STATE);
         }
         continue;
+
+      case NUMBER_STATE:
+        if (isDigit(c)) {
+          while (isDigit(next())) {
+            // No need to go through the state machine for these
+          }
+        }
+        emit(INT);
+        enter(ROOT_STATE);
+        continue;
     }
-    throw syntaxError(
-      'Unexpected character: ' + JSON.stringify(c) + ' (' + c.charCodeAt(0) + ')'
-    );
+    throw syntaxError(`Unexpected ${prettyCurrent()} in ${state}`);
   }
+
+  equal(state, ROOT_STATE); // sanity check
 
   return tokens;
 }
