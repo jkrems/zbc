@@ -1,20 +1,112 @@
 'use strict';
 
-const equal = require('assert').equal;
+const assert = require('assert');
 
 const debug = require('debug')('zbc:scan');
 
 const Tokens = require('./tokens');
+const Lexer = require('./lexer');
 
-const INT = Tokens.INT,
-      CHAR = Tokens.CHAR,
-      STRING = Tokens.STRING,
-      Token = Tokens.Token;
+const scanOperators = Lexer.makeOperatorScanner({
+  '.': Tokens.MEMBER_ACCESS,
+  '&': Tokens.UNARY_OR_BINARY,
+  '&&': Tokens.BINARY,
+  '-': Tokens.UNARY_OR_BINARY,
+  '+': Tokens.BINARY,
+  '*': Tokens.UNARY_OR_BINARY,
+  '/': Tokens.BINARY
+}, scanRoot);
 
-const CHAR_STATE = 'CHAR',
-      STRING_STATE = 'STRING',
-      NUMBER_STATE = 'NUMBER',
-      ROOT_STATE = 'ROOT';
+function scanRoot(lexer) {
+  while (isWhitespace(lexer.c)) { lexer.next(); }
+
+  if (isDigit(lexer.c)) {
+    return scanNumeric;
+  } else if (isIdentStart(lexer.c)) {
+    return scanIdentifier;
+  }
+
+  switch (lexer.c) {
+    case '\'': return scanChar;
+    case '"': return scanString;
+  }
+
+  return scanOperators;
+}
+
+function scanNumeric(lexer) {
+  if (isDigit(lexer.c)) {
+    while (isDigit(lexer.next())) { /* Consume all digits */ }
+  }
+
+  if (lexer.c !== '.') {
+    lexer.emit(Tokens.INT);
+    return scanRoot;
+  }
+
+  // Potential for floating point
+  if (isDigit(lexer.next())) {
+    while (isDigit(lexer.next())) { /* Consume all digits */ }
+    lexer.emit(Tokens.FLOAT);
+  } else {
+    lexer.back(); // Oops. Might be just a dot operator
+    lexer.emit(Tokens.INT);
+  }
+
+  return scanRoot;
+}
+
+function scanChar(lexer) {
+  let c = lexer.next();
+  if (c === '\\') {
+    throw new Error('Not implemented');
+  }
+  if (lexer.next() !== '\'') {
+    throw lexer.syntaxError('Invalid character literal');
+  }
+
+  lexer.next(); // Move to first after closing quote
+  lexer.emitWrapped(Tokens.CHAR);
+  return scanRoot;
+}
+
+function consumeStringChar(lexer) {
+  if (lexer.isEOF()) return false;
+
+  switch (lexer.c) {
+    case '\\': return lexer.next(), true;
+    case '"': return false;
+  }
+  return true;
+}
+
+function scanString(lexer) {
+  assert(lexer.c === '"');
+
+  do { lexer.next(); } while (consumeStringChar(lexer));
+
+  if (lexer.c !== '"') {
+    throw lexer.syntaxError('Could not find end of string');
+  }
+
+  lexer.next(); // Move to first after closing quote
+  lexer.emitWrapped(Tokens.STRING);
+  return scanRoot;
+}
+
+function scanIdentifier(lexer) {
+  do { lexer.next(); } while (isIdentPart(lexer.c));
+  lexer.emit(Tokens.IDENTIFIER);
+  return scanRoot;
+}
+
+function isIdentPart(c) {
+  return isIdentStart(c) || isDigit(c);
+}
+
+function isIdentStart(c) {
+  return c === '_' || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+}
 
 function isDigit(c) {
   return c >= '0' && c <= '9';
@@ -24,121 +116,9 @@ function isWhitespace(c) {
   return c === ' ' || c === '\t' || c === '\n';
 }
 
-function _scan(source) {
-  const tokens = [];
-
-  let state = ROOT_STATE;
-  let start = 0, idx = 0, c = source[0];
-
-  function enter(newState) {
-    start = idx;
-    state = newState;
-  }
-
-  function emit(type) {
-    const text = source.slice(start, idx);
-    debug('emit(%s): %j', type.toString(), text);
-    tokens.push(new Token(type, text));
-    --idx; // Next iteration will increase again
-  }
-
-  function next() {
-    c = source[++idx];
-    return c;
-  }
-
-  function isEOF() {
-    return idx >= source.length;
-  }
-
-  function syntaxError(message) {
-    const err = new SyntaxError(`${message} at ${start}..${idx}`);
-    err.start = start;
-    err.end = idx;
-    return err;
-  }
-
-  function prettyCurrent() {
-    if (c === undefined) {
-      return 'EOF';
-    } else {
-      return `${JSON.stringify(c)} (${c.charCodeAt(0)})`;
-    }
-  }
-
-  for (; idx <= source.length; next()) {
-    debug('Reading %j at %j', c, idx);
-
-    switch (state) {
-      case ROOT_STATE:
-        if (isEOF()) continue;
-
-        switch (c) {
-          case '\'':
-            enter(CHAR_STATE);
-            continue;
-
-          case '"':
-            enter(STRING_STATE);
-            continue;
-        }
-
-        if (isWhitespace(c)) {
-          continue; // skip
-        } else if (isDigit(c)) {
-          enter(NUMBER_STATE);
-          continue;
-        }
-        break;
-
-      case CHAR_STATE:
-        if (c === '\\') {
-          throw new Error('Not implemented');
-        }
-        if (next() !== '\'') {
-          throw syntaxError('Invalid character literal');
-        }
-        ++start;
-        emit(CHAR);
-        ++idx; // We do actually want to skip the closing quote
-        enter(ROOT_STATE);
-        continue;
-
-      case STRING_STATE:
-        if (isEOF()) break;
-
-        switch (c) {
-          case '\\':
-            next();
-            break;
-          case '"':
-            ++start;
-            emit(STRING);
-            ++idx;
-            enter(ROOT_STATE);
-        }
-        continue;
-
-      case NUMBER_STATE:
-        if (isDigit(c)) {
-          while (isDigit(next())) {
-            // No need to go through the state machine for these
-          }
-        }
-        emit(INT);
-        enter(ROOT_STATE);
-        continue;
-    }
-    throw syntaxError(`Unexpected ${prettyCurrent()} in ${state}`);
-  }
-
-  equal(state, ROOT_STATE); // sanity check
-
-  return tokens;
-}
-
-function scan(source) {
-  return _scan(source);
+function scan(source, options) {
+  const lexer = new Lexer(source, scanRoot, options);
+  return lexer.scan();
 }
 
 module.exports = scan;
