@@ -1,11 +1,16 @@
-/* @flow */
-export class Token {
-  constructor(type, text) {
-    this.type = type;
-    this.text = text;
-  }
+'use strict';
+
+function Token(type, text) {
+  this.type = type;
+  this.text = text;
 }
 
-export const INT = 0;
-export const CHAR = 1;
-export const STRING = 2;
+const TokenTypes = [
+  'INT', 'CHAR', 'STRING'
+];
+
+exports.Token = Token;
+
+for (let type of TokenTypes) {
+  exports[type] = Symbol(type);
+}

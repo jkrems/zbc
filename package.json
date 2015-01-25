@@ -4,13 +4,11 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "pretest": "6to5 src --out-dir lib",
     "test": "mocha"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Jan Krems <jan.krems@gmail.com>",
+  "license": "MIT",
   "devDependencies": {
-    "6to5": "^2.13.7",
     "assertive": "^1.4.1",
     "mocha": "^2.1.0"
   },

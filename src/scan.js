@@ -1,14 +1,20 @@
-/* @flow */
-import {equal} from 'assert';
+'use strict';
 
-import {Token, INT, CHAR, STRING} from './tokens';
+const equal = require('assert').equal;
 
 const debug = require('debug')('zbc:scan');
 
-const ROOT_STATE = 'ROOT';
-const CHAR_STATE = 'CHAR';
-const STRING_STATE = 'STRING';
-const NUMBER_STATE = 'NUMBER';
+const Tokens = require('./tokens');
+
+const INT = Tokens.INT,
+      CHAR = Tokens.CHAR,
+      STRING = Tokens.STRING,
+      Token = Tokens.Token;
+
+const CHAR_STATE = 'CHAR',
+      STRING_STATE = 'STRING',
+      NUMBER_STATE = 'NUMBER',
+      ROOT_STATE = 'ROOT';
 
 function isDigit(c) {
   return c >= '0' && c <= '9';
@@ -18,7 +24,7 @@ function isWhitespace(c) {
   return c === ' ' || c === '\t' || c === '\n';
 }
 
-function _scan(source: String) {
+function _scan(source) {
   const tokens = [];
 
   let state = ROOT_STATE;
@@ -31,7 +37,7 @@ function _scan(source: String) {
 
   function emit(type) {
     const text = source.slice(start, idx);
-    debug('emit(%d): %j', type, text);
+    debug('emit(%s): %j', type.toString(), text);
     tokens.push(new Token(type, text));
     --idx; // Next iteration will increase again
   }
@@ -86,8 +92,7 @@ function _scan(source: String) {
         break;
 
       case CHAR_STATE:
-        let text = c;
-        if (text === '\\') {
+        if (c === '\\') {
           throw new Error('Not implemented');
         }
         if (next() !== '\'') {
@@ -132,6 +137,9 @@ function _scan(source: String) {
   return tokens;
 }
 
-export default function scan(source: String): Array<Token> {
+function scan(source) {
   return _scan(source);
 }
+
+module.exports = scan;
+module.exports.default = scan;
