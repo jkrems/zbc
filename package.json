@@ -1,0 +1,21 @@
+{
+  "name": "zbc",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "pretest": "6to5 src --out-dir lib",
+    "test": "mocha"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "6to5": "^2.13.7",
+    "assertive": "^1.4.1",
+    "mocha": "^2.1.0"
+  },
+  "dependencies": {
+    "debug": "^2.1.1",
+    "lodash": "^2.4.1"
+  }
+}
