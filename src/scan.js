@@ -9,12 +9,21 @@ const Lexer = require('./lexer');
 
 const scanOperators = Lexer.makeOperatorScanner({
   '.': Tokens.MEMBER_ACCESS,
+  '->': Tokens.MEMBER_ACCESS,
   '&': Tokens.UNARY_OR_BINARY,
   '&&': Tokens.BINARY,
   '-': Tokens.UNARY_OR_BINARY,
   '+': Tokens.BINARY,
   '*': Tokens.UNARY_OR_BINARY,
-  '/': Tokens.BINARY
+  '/': Tokens.BINARY,
+  '<': Tokens.BINARY,
+  '<<': Tokens.BINARY,
+  ';': Tokens.EOL,
+  '(': Tokens.LPAREN,
+  ')': Tokens.RPAREN,
+  '{': Tokens.LBRACE,
+  '}': Tokens.RBRACE,
+  ',': Tokens.SEP
 }, scanRoot);
 
 function scanRoot(lexer) {

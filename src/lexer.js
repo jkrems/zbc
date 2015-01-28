@@ -4,6 +4,16 @@ const assert = require('assert');
 
 const debug = require('debug')('zbc:lexer');
 
+function Position(source, index) {
+  this.source = source;
+  this.index = index;
+}
+
+Position.prototype.toString = function() {
+  const snippet = this.source.slice(this.index - 5, this.index + 5);
+  return '' + this.index + ':{' + JSON.stringify(snippet) + '}';
+};
+
 function Token(type, text, position) {
   this.type = type;
   this.text = text;
@@ -79,9 +89,7 @@ Lexer.prototype.scan = function scan() {
 
 Lexer.prototype._emit = function(type, text) {
   debug('emit(%s): %j', type.toString(), text);
-  this.tokens.push(new Token(type, text, {
-    index: this.start
-  }));
+  this.tokens.push(new Token(type, text, new Position(this.source, this.start)));
 };
 
 Lexer.prototype.emit = function emit(type) {

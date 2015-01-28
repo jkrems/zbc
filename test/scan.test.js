@@ -44,38 +44,52 @@ function id(text) { return [ Tokens.IDENTIFIER, text ]; }
 function access(text) { return [ Tokens.MEMBER_ACCESS, text ]; }
 function bin(text) { return [ Tokens.BINARY, text ]; }
 function op(text) { return [ Tokens.UNARY_OR_BINARY, text ]; }
+function eol() { return [ Tokens.EOL, ';' ]; }
+function lParen() { return [ Tokens.LPAREN, '(' ]; }
+function rParen() { return [ Tokens.RPAREN, ')' ]; }
+function lBrace() { return [ Tokens.LBRACE, '{' ]; }
+function rBrace() { return [ Tokens.RBRACE, '}' ]; }
 
 describe('scan', function() {
-  it('parses an empty string to an empty list', tokenized``);
+  it('scans an empty string to an empty list', tokenized``);
 
-  it('can parse an identifier', tokenized`${id('x')}x`);
+  it('scans an identifier', tokenized`${id('x')}x`);
 
-  it('can parse a single INT token', tokenized`${int('10')}10`);
+  it('scans a single INT token', tokenized`${int('10')}10`);
 
-  it('can parse the dot operator', tokenized`${access('.')}.`);
+  it('scans the dot operator', tokenized`${access('.')}.`);
 
-  it('can parse int member',
+  it('scans int member',
     tokenized`${int('3')}3${access('.')}.${id('foo')}foo`);
 
-  it('can parse +', tokenized`${int('3')}3 ${bin('+')}+ ${int('7')}7`);
+  it('scans +', tokenized`${int('3')}3 ${bin('+')}+ ${int('7')}7`);
 
-  it('can parse *', tokenized`${int('3')}3 ${op('*')}* ${int('7')}7`);
+  it('scans *', tokenized`${int('3')}3 ${op('*')}* ${int('7')}7`);
 
-  it('can parse /', tokenized`${int('3')}3 ${bin('/')}/ ${int('7')}7`);
+  it('scans /', tokenized`${int('3')}3 ${bin('/')}/ ${int('7')}7`);
 
-  it('can parse two INTs', tokenized`${int('10')}10 ${int('3')}3`);
+  it('scans hello world', tokenized`
+    ${id('stdout')}stdout ${bin('<<')}<< ${str('Hi!\\n')}"Hi!\\n"${eol()};
+  `);
 
-  it('can parse a float', tokenized`${float('1.95883')}1.95883`);
+  it('scans a function decl', tokenized`
+    ${id('main')}main${lParen()}(${rParen()}) ${lBrace()}{
+    ${rBrace()}}
+  `);
 
-  it('can parse a single CHAR token', tokenized`${char('a')}'a'`);
+  it('scans two INTs', tokenized`${int('10')}10 ${int('3')}3`);
 
-  it('can parse a CHAR surrounded by INTs',
+  it('scans a float', tokenized`${float('1.95883')}1.95883`);
+
+  it('scans a single CHAR token', tokenized`${char('a')}'a'`);
+
+  it('scans a CHAR surrounded by INTs',
     tokenized`${int('1')}1 ${char('b')}'b' ${int('3')}3`);
 
-  it('can parse STRING tokens',
+  it('scans STRING tokens',
     tokenized`${int('1')}1 ${str('foo')}"foo" ${int('3')}3`);
 
-  it('can parse escape sequences in strings',
+  it('scans escape sequences in strings',
     tokenized`${int('1')}1 ${str('f\\"oo')}"f\\"oo" ${int('3')}3`);
 
   it('fails when strings ends suddenly', function() {
