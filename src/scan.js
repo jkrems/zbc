@@ -122,7 +122,7 @@ function isDigit(c) {
 }
 
 function isWhitespace(c) {
-  return c === ' ' || c === '\t' || c === '\n';
+  return c === ' ' || c === '\n';
 }
 
 function scan(source, options) {
