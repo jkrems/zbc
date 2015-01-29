@@ -50,7 +50,7 @@ const transforms = {
   },
 
   FunctionDeclaration: function(node) {
-    return {
+    const decl = {
       type: 'FunctionDeclaration',
       id: {
         type: 'Identifier',
@@ -67,6 +67,9 @@ const transforms = {
         type: 'BlockStatement',
         body: node.body.map(function(expr, idx) {
           if (idx + 1 < node.body.length) {
+            if (expr.getNodeType() === 'Assignment') {
+              return toJS(expr);
+            }
             return {
               type: 'ExpressionStatement',
               expression: toJS(expr)
@@ -78,7 +81,45 @@ const transforms = {
           };
         })
       }
+    };
+    if (node.visibility === 'public') {
+      return {
+        type: 'ExportDeclaration',
+        declaration: decl
+      };
     }
+    return decl;
+  },
+
+  Assignment: function(node) {
+    return {
+      type: 'VariableDeclaration',
+      kind: 'const',
+      declarations: [
+        {
+          type: 'VariableDeclarator',
+          id: toJS(node.target),
+          init: toJS(node.value)
+        }
+      ]
+    };
+  },
+
+  Interpolation: function(node) {
+    return {
+      type: 'TemplateLiteral',
+      quasis: node.elements.filter(function(e) {
+        return e.getNodeType() === 'Literal' && typeof e.value === 'string';
+      }).map(function(e) {
+        return {
+          type: 'TemplateElement',
+          value: { raw: e.value }
+        };
+      }),
+      expressions: node.elements.filter(function(e) {
+        return e.getNodeType() !== 'Literal' || typeof e.value !== 'string';
+      }).map(toJS)
+    };
   },
 
   BinaryExpression: function(node) {

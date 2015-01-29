@@ -24,29 +24,95 @@ function identifier(state) {
   return new ZB.Identifier(id.text);
 }
 
-function literal(state) {
-  const value = state.read();
-  let type;
-  switch (value.type) {
-    case Tokens.STRING: type = 'String'; break;
-    case Tokens.INT: type = 'Int'; break;
-    case Tokens.FLOAT: type = 'Float'; break;
-    default:
-      throw new Error(
-        `Invalid literal: ${value.type.toString()}`
-      );
+function stringLiteral(state) {
+  const t = state.read();
+  let value = t.text;
+  let elements = [];
+  let buffer = '';
+
+  let start = 0, idx;
+  while ((idx = value.indexOf('\\', start)) !== -1) {
+    if (idx > start) {
+      buffer += value.slice(start, idx);
+    }
+
+    let signal = value[idx + 1], interpolateEnd;
+    switch (signal) {
+      case 'n': buffer += '\n'; ++idx; break;
+      case 't': buffer += '\t'; ++idx; break;
+      case '"': buffer += '"'; ++idx; break;
+      case '\\': buffer += '\\'; ++idx; break;
+      case '{':
+        interpolateEnd = value.indexOf('}', idx + 1);
+        if (interpolateEnd === -1) {
+          throw new Error('Could not find end of interpolation');
+        }
+        start = interpolateEnd + 1;
+        if (buffer.length) {
+          elements.push(buffer);
+          buffer = '';
+        }
+        elements.push({ expr: value.slice(idx + 2, interpolateEnd) });
+        continue;
+
+      default:
+        throw new Error('Invalid escape sequence: \\' + signal);
+    }
+    start = idx + 1;
   }
-  // TODO: parse the value properly
-  return new ZB.Literal(value.text, type);
+
+  if (start < value.length) {
+    buffer += value.slice(start);
+  }
+
+  if (buffer.length) {
+    elements.push(buffer);
+  }
+
+  const parsedElements = elements.map(function(e) {
+    if (typeof e === 'string') {
+      return new ZB.Literal(e, 'String');
+    }
+    // TODO: actually lex/parse the expression
+    return new ZB.Identifier(e.expr);
+  });
+
+  if (parsedElements[0].getNodeType() !== 'Literal' ||
+      parsedElements[0].type !== 'String') {
+    parsedElements.unshift(new ZB.Literal('', 'String'));
+  }
+
+  // TODO: collapse string literals (?)
+
+  if (parsedElements.length === 1) {
+    return new ZB.Literal(elements[0], 'String');
+  }
+
+  return new ZB.Interpolation(parsedElements);
+}
+
+function literal(state) {
+  const t = state.read();
+  let type, value = t.text;
+  switch (t.type) {
+    case Tokens.INT: type = 'Int'; value = parseInt(value, 10); break;
+    case Tokens.FLOAT: type = 'Float'; value = parseFloat(value); break;
+    case Tokens.CHAR: type = 'Char'; break;
+    default:
+      throw new Error(`Invalid literal: ${t.type.toString()}`);
+  }
+  return new ZB.Literal(value, type);
 }
 
 function valueExpr(state) {
   const peek = state.next.type;
   if (peek === Tokens.IDENTIFIER) {
     return identifier(state);
-  } else if (peek === Tokens.STRING ||
-             peek === Tokens.INT ||
-             peek === Tokens.FLOAT) {
+  } else if (peek === Tokens.STRING) {
+    return stringLiteral(state);
+  } else if (peek === Tokens.INT ||
+             peek === Tokens.FLOAT ||
+             peek === Tokens.CHAR) {
     return literal(state);
   } else if (peek === Tokens.LPAREN) {
     state.read(Tokens.LPAREN);
@@ -107,12 +173,26 @@ function expression(state) {
   return lOperand;
 }
 
+function isLExpr(node) {
+  return node.getNodeType() === 'Identifier';
+}
+
 function block(state) {
   state.read(Tokens.LBRACE);
 
   const content = [];
   while (state.next.type !== Tokens.RBRACE) {
-    content.push(expression(state));
+    const left = expression(state);
+    if (state.next.type === Tokens.ASSIGN) {
+      state.read(Tokens.ASSIGN);
+      if (!isLExpr(left)) {
+        throw new Error('Invalid l-expr: ' + left);
+      }
+      const right = expression(state);
+      content.push(new ZB.Assignment(left, right));
+    } else {
+      content.push(left);
+    }
     state.read(Tokens.EOL);
   }
 
@@ -139,10 +219,16 @@ function parameterList(state) {
 }
 
 function declaration(state) {
+  let visibility = 'private';
+
+  if (state.next.type === Tokens.VISIBILITY) {
+    visibility = state.read(Tokens.VISIBILITY).text;
+  }
+
   const id = identifier(state);
   const params = parameterList(state);
   const body = block(state);
-  return new ZB.FunctionDeclaration(id, params, body);
+  return new ZB.FunctionDeclaration(id, params, body, visibility);
 }
 
 function declarations(state) {

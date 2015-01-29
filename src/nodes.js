@@ -4,11 +4,13 @@ const _ = require('lodash');
 
 const NODE_SPEC = {
   Module: [ 'body' ],
-  FunctionDeclaration: [ 'id', 'params', 'body' ],
+  FunctionDeclaration: [ 'id', 'params', 'body', 'visibility' ],
+  Assignment: [ 'target', 'value' ],
   BinaryExpression: [ 'left', 'op', 'right' ],
   UnaryExpression: [ 'op', 'right' ],
   FCallExpression: [ 'callee', 'args' ],
   Literal: [ 'value', 'type' ],
+  Interpolation: [ 'elements' ],
   Identifier: [ 'name' ]
 };
 

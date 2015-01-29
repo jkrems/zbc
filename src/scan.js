@@ -8,6 +8,7 @@ const Tokens = require('./tokens');
 const Lexer = require('./lexer');
 
 const scanOperators = Lexer.makeOperatorScanner({
+  '=': Tokens.ASSIGN,
   '.': Tokens.MEMBER_ACCESS,
   '->': Tokens.MEMBER_ACCESS,
   '&': Tokens.UNARY_OR_BINARY,
@@ -38,9 +39,16 @@ function scanRoot(lexer) {
   switch (lexer.c) {
     case '\'': return scanChar;
     case '"': return scanString;
+    case '#': return scanLineComment;
   }
 
   return scanOperators;
+}
+
+function scanLineComment(lexer) {
+  while (lexer.c !== '\n') { lexer.next(); }
+  lexer.next(); // skip over the new line
+  return scanRoot;
 }
 
 function scanNumeric(lexer) {
@@ -103,9 +111,13 @@ function scanString(lexer) {
   return scanRoot;
 }
 
+const KEYWORDS = {
+  'public': Tokens.VISIBILITY
+};
 function scanIdentifier(lexer) {
   do { lexer.next(); } while (isIdentPart(lexer.c));
-  lexer.emit(Tokens.IDENTIFIER);
+  const text = lexer.currentText();
+  lexer.emit(KEYWORDS[text] || Tokens.IDENTIFIER);
   return scanRoot;
 }
 

@@ -54,13 +54,13 @@ function Lexer(source, initial, options) {
   if (!options) options = {};
 
   this.source = source;
-  this.length = source.length;
+  this.maxIdx = options.maxIdx || source.length;
   this.filename = options.filename;
 
   this.initialState = initial;
   this.start = 0;
 
-  this.idx = 0;
+  this.idx = options.idx || 0;
   this.c = source[0];
 
   this.tokens = [];
@@ -92,8 +92,12 @@ Lexer.prototype._emit = function(type, text) {
   this.tokens.push(new Token(type, text, new Position(this.source, this.start)));
 };
 
+Lexer.prototype.currentText = function() {
+  return this.source.slice(this.start, this.idx);
+};
+
 Lexer.prototype.emit = function emit(type) {
-  return this._emit(type, this.source.slice(this.start, this.idx));
+  return this._emit(type, this.currentText());
 };
 
 Lexer.prototype.emitWrapped = function(type) {
@@ -112,7 +116,7 @@ Lexer.prototype.back = function() {
 };
 
 Lexer.prototype.isEOF = function() {
-  return this.idx >= this.length;
+  return this.idx >= this.maxIdx;
 };
 
 Lexer.prototype.syntaxError = function syntaxError(message) {
