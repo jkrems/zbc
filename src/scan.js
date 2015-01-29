@@ -91,7 +91,7 @@ function consumeStringChar(lexer) {
   if (lexer.isEOF()) return false;
 
   switch (lexer.c) {
-    case '\\': return lexer.next(), true;
+    case '\\': lexer.next(); return true;
     case '"': return false;
   }
   return true;

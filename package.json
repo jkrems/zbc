@@ -9,6 +9,7 @@
   "author": "Jan Krems <jan.krems@gmail.com>",
   "license": "MIT",
   "devDependencies": {
+    "6to5": "^3.0.15",
     "assertive": "^1.4.1",
     "mocha": "^2.1.0"
   },

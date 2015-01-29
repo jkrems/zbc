@@ -1,5 +1,7 @@
 'use strict';
 
+const fs = require('fs');
+
 const assert = require('assertive');
 const escodegen = require('escodegen');
 
@@ -7,18 +9,9 @@ const scan = require('../src/scan');
 const parse = require('../src/parser');
 const js = require('../src/js');
 
-describe.only('js', function() {
+describe('js', function() {
   it('does stuff', function() {
-    const source = `public main(argv) {
-  # The other primitive types
-  c = 'c'; n = 42; f = 0.2;
-
-  name = "Quinn";
-  stdout << "Static\\tEsc\\\\apes";
-  stdout << "\\{name} says \\"Hello\\"";
-  stdout << argv->length.join(" :: ");
-  stdout << "Hello \\{name}!\\n";
-}`;
+    const source = fs.readFileSync('examples/demo.zb', 'utf8');
     this.tokens = scan(source);
     const ast = parse(this.tokens);
 
@@ -26,6 +19,7 @@ describe.only('js', function() {
     const jsSource = escodegen.generate(jsAst, {
       indent: '  '
     });
+    fs.writeFileSync('examples/demo.js', jsSource);
 
     console.log('\n--- in:\n%s\n--- out:\n%s', source, jsSource);
   });

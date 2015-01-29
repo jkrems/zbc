@@ -1,0 +1,13 @@
+public main(argv) {
+  # The other primitive types
+  c = 'c'; n = 42; f = 0.2;
+
+  stdout = process.stdout;
+
+  name = "Quinn";
+  stdout << "Static\tEsc\\apes\n";
+  stdout << "\{name} says \"Hello\"\n";
+  stdout << argv->length.join(" :: ");
+  stdout << "\n";
+  stdout << "Hello \{name}!\n";
+}
