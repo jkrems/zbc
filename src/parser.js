@@ -19,6 +19,14 @@ ParseState.prototype.read = function(type) {
   return token;
 };
 
+ParseState.prototype.tryRead = function(type) {
+  if (this.next.type === type) {
+    return this.read(type);
+  } else {
+    return null;
+  }
+};
+
 function identifier(state) {
   const id = state.read(Tokens.IDENTIFIER);
   return new ZB.Identifier(id.text);
@@ -183,6 +191,12 @@ function block(state) {
   const content = [];
   while (state.next.type !== Tokens.RBRACE) {
     const left = expression(state);
+    let hint = null;
+
+    if (state.tryRead(Tokens.COLON)) {
+      hint = typeHint(state);
+    }
+
     if (state.next.type === Tokens.ASSIGN) {
       state.read(Tokens.ASSIGN);
       if (!isLExpr(left)) {
@@ -200,8 +214,23 @@ function block(state) {
   return content;
 }
 
+function typeHint(state) {
+  const t = { id: state.read(Tokens.IDENTIFIER), args: [] };
+  if (state.tryRead(Tokens.LESS)) {
+    do {
+      t.args.push(typeHint(state));
+    } while (state.tryRead(Tokens.SEP));
+    state.read(Tokens.MORE);
+  }
+  return t;
+}
+
 function parameter(state) {
-  return identifier(state);
+  const id = identifier(state);
+  if (state.tryRead(Tokens.COLON)) {
+    id.setType(typeHint(state));
+  }
+  return id;
 }
 
 function parameterList(state) {
@@ -215,6 +244,7 @@ function parameterList(state) {
     params.push(parameter(state));
   } while (state.next.type === Tokens.SEP);
   state.read(Tokens.RPAREN);
+
   return params;
 }
 
@@ -227,6 +257,12 @@ function declaration(state) {
 
   const id = identifier(state);
   const params = parameterList(state);
+
+  let returnType = null;
+  if (state.tryRead(Tokens.COLON)) {
+    returnType = typeHint(state);
+  }
+
   const body = block(state);
   return new ZB.FunctionDeclaration(id, params, body, visibility);
 }

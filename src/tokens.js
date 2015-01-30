@@ -6,8 +6,9 @@ const TokenTypes = [
   'MEMBER_ACCESS', // '.' / '->'
   'BINARY', 'UNARY', 'UNARY_OR_BINARY',
   'EOL', // ';'
+  'LESS', 'MORE', // < / >
   'LPAREN', 'RPAREN', 'LBRACE', 'RBRACE',
-  'SEP'
+  'SEP', 'COLON'
 ];
 
 for (let type of TokenTypes) {

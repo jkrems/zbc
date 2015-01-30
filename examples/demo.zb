@@ -1,10 +1,10 @@
-public main(argv) {
+public main(argv: Array<String>): Void {
   # The other primitive types
-  c = 'c'; n = 42; f = 0.2;
+  c: Char = 'c'; n: Int = 42; f: Float = 0.2;
 
-  stdout = process.stdout;
+  stdout: Stream = process.stdout;
 
-  name = "Quinn";
+  name: String = "Quinn";
   stdout << "Static\tEsc\\apes\n";
   stdout << "\{name} says \"Hello\"\n";
   stdout << argv->length.join(" :: ");
