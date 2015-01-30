@@ -5,6 +5,13 @@ class TypeReference {
     this.name = name;
     this.args = args;
   }
+
+  toString() {
+    if (this.args.length) {
+      return `${this.name}<${this.args.join(', ')}>`;
+    }
+    return this.name;
+  }
 }
 
 class UnknownType {

@@ -82,13 +82,17 @@ const transforms = {
         })
       }
     };
-    if (node.visibility === 'public') {
+    const outNode = (node.visibility === 'public') ?
+      { type: 'ExportDeclaration', declaration: decl } : decl;
+
+    outNode.leadingComments = node.params.map(function(param) {
       return {
-        type: 'ExportDeclaration',
-        declaration: decl
+        range: 10,
+        value: `\n * @param ${param.name} ${param.type.toString()}\n `
       };
-    }
-    return decl;
+    });
+
+    return outNode;
   },
 
   Assignment: function(node) {

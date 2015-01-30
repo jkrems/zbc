@@ -17,7 +17,8 @@ describe('js', function() {
 
     const jsAst = js(ast);
     const jsSource = escodegen.generate(jsAst, {
-      indent: '  '
+      indent: '  ',
+      comment: true
     });
     fs.writeFileSync('examples/demo.js', jsSource);
 

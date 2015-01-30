@@ -1,3 +1,6 @@
+/*
+ * @param argv Array<String>
+ */
 export function main(argv) {
   const c = 'c';
   const n = 42;
