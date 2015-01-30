@@ -39,7 +39,7 @@ function scanRoot(lexer) {
   }
 
   switch (lexer.c) {
-    case '\'': return scanChar;
+    case "'": return scanChar;
     case '"': return scanString;
     case '#': return scanLineComment;
   }

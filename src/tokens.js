@@ -14,3 +14,4 @@ const TokenTypes = [
 for (let type of TokenTypes) {
   exports[type] = Symbol(type);
 }
+exports.default = exports;

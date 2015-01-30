@@ -2,37 +2,40 @@
 
 const Tokens = require('./tokens');
 const ZB = require('./nodes');
+const TypeSystem = require('./type-system');
 
-function ParseState(tokens) {
-  this.tokens = tokens;
-  this.idx = 0;
-  this.next = tokens[0];
+class ParseState {
+  constructor(tokens) {
+    this.tokens = tokens;
+    this.idx = 0;
+    this.next = tokens[0];
+  }
+
+  read(type) {
+    const token = this.next;
+    if (type !== undefined && token.type !== type) {
+      throw new Error(
+        `Unexpected ${token.type.toString()}, expected ${type.toString()} at ${token.position}`);
+    }
+    this.next = this.tokens[++this.idx];
+    return token;
+  }
+
+  tryRead(type) {
+    if (this.next.type === type) {
+      return this.read(type);
+    } else {
+      return null;
+    }
+  }
 }
 
-ParseState.prototype.read = function(type) {
-  const token = this.next;
-  if (type !== undefined && token.type !== type) {
-    throw new Error(
-      `Unexpected ${token.type.toString()}, expected ${type.toString()} at ${token.position}`);
-  }
-  this.next = this.tokens[++this.idx];
-  return token;
-};
-
-ParseState.prototype.tryRead = function(type) {
-  if (this.next.type === type) {
-    return this.read(type);
-  } else {
-    return null;
-  }
-};
-
-function identifier(state) {
+function identifier(state, types) {
   const id = state.read(Tokens.IDENTIFIER);
   return new ZB.Identifier(id.text);
 }
 
-function stringLiteral(state) {
+function stringLiteral(state, types) {
   const t = state.read();
   let value = t.text;
   let elements = [];
@@ -99,7 +102,7 @@ function stringLiteral(state) {
   return new ZB.Interpolation(parsedElements);
 }
 
-function literal(state) {
+function literal(state, types) {
   const t = state.read();
   let type, value = t.text;
   switch (t.type) {
@@ -112,39 +115,39 @@ function literal(state) {
   return new ZB.Literal(value, type);
 }
 
-function valueExpr(state) {
+function valueExpr(state, types) {
   const peek = state.next.type;
   if (peek === Tokens.IDENTIFIER) {
-    return identifier(state);
+    return identifier(state, types);
   } else if (peek === Tokens.STRING) {
-    return stringLiteral(state);
+    return stringLiteral(state, types);
   } else if (peek === Tokens.INT ||
              peek === Tokens.FLOAT ||
              peek === Tokens.CHAR) {
-    return literal(state);
+    return literal(state, types);
   } else if (peek === Tokens.LPAREN) {
     state.read(Tokens.LPAREN);
-    const inner = expression(state);
+    const inner = expression(state, types);
     state.read(Tokens.RPAREN);
     return inner;
   }
   throw new Error(`Unexpected ${peek.toString()}`);
 }
 
-function fcallExpr(state) {
-  let lOperand = valueExpr(state);
+function fcallExpr(state, types) {
+  let lOperand = valueExpr(state, types);
   while (true) {
     let op, rOperand;
     switch (state.next.type) {
       case Tokens.MEMBER_ACCESS:
         op = state.read(Tokens.MEMBER_ACCESS);
-        rOperand = identifier(state);
+        rOperand = identifier(state, types);
         lOperand = new ZB.BinaryExpression(lOperand, op.text, rOperand);
         break;
 
       case Tokens.LPAREN:
         state.read(Tokens.LPAREN);
-        var arg = expression(state);
+        var arg = expression(state, types);
         state.read(Tokens.RPAREN);
         lOperand = new ZB.FCallExpression(lOperand, [ arg ]);
 
@@ -154,13 +157,13 @@ function fcallExpr(state) {
   }
 }
 
-function unaryExpr(state) {
+function unaryExpr(state, types) {
   const peek = state.next.type;
   let op;
   if (peek === Tokens.UNARY || peek === Tokens.UNARY_OR_BINARY) {
     op = state.read();
   }
-  const value = fcallExpr(state);
+  const value = fcallExpr(state, types);
 
   if (op !== undefined) {
     return new ZB.UnaryExpression(op, value);
@@ -169,13 +172,13 @@ function unaryExpr(state) {
   }
 }
 
-function expression(state) {
+function expression(state, types) {
   // See: http://en.cppreference.com/w/cpp/language/operator_precedence
   // unaryExpr [ ( binaryOp | unaryOp ) unaryExpr ]*
-  let lOperand = unaryExpr(state);
+  let lOperand = unaryExpr(state, types);
   while (state.next.type === Tokens.BINARY || state.next.type === Tokens.UNARY_OR_BINARY) {
     const op = state.read();
-    const rOperand = unaryExpr(state);
+    const rOperand = unaryExpr(state, types);
     lOperand = new ZB.BinaryExpression(lOperand, op.text, rOperand);
   }
   return lOperand;
@@ -185,16 +188,16 @@ function isLExpr(node) {
   return node.getNodeType() === 'Identifier';
 }
 
-function block(state) {
+function block(state, types) {
   state.read(Tokens.LBRACE);
 
   const content = [];
   while (state.next.type !== Tokens.RBRACE) {
-    const left = expression(state);
+    const left = expression(state, types);
     let hint = null;
 
     if (state.tryRead(Tokens.COLON)) {
-      hint = typeHint(state);
+      hint = typeHint(state, types);
     }
 
     if (state.next.type === Tokens.ASSIGN) {
@@ -202,10 +205,13 @@ function block(state) {
       if (!isLExpr(left)) {
         throw new Error('Invalid l-expr: ' + left);
       }
-      const right = expression(state);
+      const right = expression(state, types);
+      left.setType(hint);
       content.push(new ZB.Assignment(left, right));
-    } else {
+    } else if (hint === null) {
       content.push(left);
+    } else {
+      throw new Error('Unexpected type hint');
     }
     state.read(Tokens.EOL);
   }
@@ -214,26 +220,27 @@ function block(state) {
   return content;
 }
 
-function typeHint(state) {
-  const t = { id: state.read(Tokens.IDENTIFIER), args: [] };
+function typeHint(state, types) {
+  const args = [];
+  const name = state.read(Tokens.IDENTIFIER).text;
   if (state.tryRead(Tokens.LESS)) {
     do {
-      t.args.push(typeHint(state));
+      args.push(typeHint(state, types));
     } while (state.tryRead(Tokens.SEP));
     state.read(Tokens.MORE);
   }
-  return t;
+  return types.createReference(name, args);
 }
 
-function parameter(state) {
-  const id = identifier(state);
+function parameter(state, types) {
+  const id = identifier(state, types);
   if (state.tryRead(Tokens.COLON)) {
-    id.setType(typeHint(state));
+    id.setType(typeHint(state, types));
   }
   return id;
 }
 
-function parameterList(state) {
+function parameterList(state, types) {
   state.read(Tokens.LPAREN);
   if (state.next.type === Tokens.RPAREN) {
     state.read(Tokens.RPAREN);
@@ -241,42 +248,44 @@ function parameterList(state) {
   }
   const params = [];
   do {
-    params.push(parameter(state));
+    params.push(parameter(state, types));
   } while (state.next.type === Tokens.SEP);
   state.read(Tokens.RPAREN);
 
   return params;
 }
 
-function declaration(state) {
+function declaration(state, types) {
   let visibility = 'private';
 
   if (state.next.type === Tokens.VISIBILITY) {
     visibility = state.read(Tokens.VISIBILITY).text;
   }
 
-  const id = identifier(state);
-  const params = parameterList(state);
+  const id = identifier(state, types);
+  const params = parameterList(state, types);
 
   let returnType = null;
   if (state.tryRead(Tokens.COLON)) {
-    returnType = typeHint(state);
+    returnType = typeHint(state, types);
   }
 
-  const body = block(state);
+  const body = block(state, types);
   return new ZB.FunctionDeclaration(id, params, body, visibility);
 }
 
-function declarations(state) {
+function declarations(state, types) {
   const decls = [];
-  decls.push(declaration(state));
+  decls.push(declaration(state, types));
   return decls;
 }
 
 function parse(tokens) {
   const state = new ParseState(tokens);
-  const decls = declarations(state);
+  const types = new TypeSystem();
+  const decls = declarations(state, types);
   return new ZB.Module(decls);
 }
 
 module.exports = parse;
+module.exports.default = parse;

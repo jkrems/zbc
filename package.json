@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "mocha"
+    "test": "mocha --harmony"
   },
   "author": "Jan Krems <jan.krems@gmail.com>",
   "license": "MIT",
