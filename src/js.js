@@ -35,6 +35,15 @@ function callMain() {
   };
 }
 
+function toJSType(type) {
+  const base = type.name;
+  const args = type.args;
+  if (args.length > 0) {
+    return base + '.<' + args.map(toJSType) + '>';
+  }
+  return base;
+}
+
 const transforms = {
   Module: function(node) {
     const body = node.body.map(toJS);
@@ -88,7 +97,7 @@ const transforms = {
     outNode.leadingComments = node.params.map(function(param) {
       return {
         range: 10,
-        value: `\n * @param ${param.name} ${param.type.toString()}\n `
+        value: `\n * @param ${param.name} {${toJSType(param.type)}}\n `
       };
     });
 

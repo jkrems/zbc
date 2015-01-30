@@ -1,5 +1,5 @@
 /*
- * @param argv Array<String>
+ * @param argv {Array.<String>}
  */
 export function main(argv) {
   const c = 'c';
