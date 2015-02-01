@@ -1,19 +1,19 @@
+/* global describe, it */
 'use strict';
 
 const fs = require('fs');
 
-const assert = require('assertive');
 const escodegen = require('escodegen');
 
-const scan = require('../src/scan');
-const parse = require('../src/parser');
-const js = require('../src/js');
+const scan = require('../../src/scan');
+const parse = require('../../src/parser');
+const js = require('../../src/backend/js');
 
 describe('js', function() {
   it('does stuff', function() {
     const source = fs.readFileSync('examples/demo.zb', 'utf8');
-    this.tokens = scan(source);
-    const ast = parse(this.tokens);
+    const tokens = scan(source);
+    const ast = parse(tokens);
 
     const jsAst = js(ast);
     const jsSource = escodegen.generate(jsAst, {

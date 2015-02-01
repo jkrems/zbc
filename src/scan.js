@@ -2,8 +2,6 @@
 
 const assert = require('assert');
 
-const debug = require('debug')('zbc:scan');
-
 const Tokens = require('./tokens');
 const Lexer = require('./lexer');
 
@@ -90,7 +88,7 @@ function scanChar(lexer) {
 }
 
 function consumeStringChar(lexer) {
-  if (lexer.isEOF()) return false;
+  if (lexer.isEOF()) { return false; }
 
   switch (lexer.c) {
     case '\\': lexer.next(); return true;

@@ -14,7 +14,7 @@ function makeOperatorScanner(operators, success, failure) {
 
   return function(lexer) {
     let candidates = byFirstChar[lexer.c];
-    if (!candidates) return failure;
+    if (!candidates) { return failure; }
 
     let candiate = candidates[lexer.next()];
     if (candiate !== undefined) {
@@ -22,12 +22,12 @@ function makeOperatorScanner(operators, success, failure) {
       lexer.emit(candiate);
       return success;
     } else if (candidates[''] !== undefined) {
-      lexer.emit(candidates[''])
+      lexer.emit(candidates['']);
       return success;
     } else {
       return failure;
     }
-  }
+  };
 }
 
 module.exports = makeOperatorScanner;

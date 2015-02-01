@@ -3,6 +3,7 @@
 const Tokens = require('./tokens');
 const ZB = require('./nodes');
 const TypeSystem = require('./type-system');
+const registerBuiltIns = require('./built-ins');
 
 class ParseState {
   constructor(tokens) {
@@ -30,12 +31,12 @@ class ParseState {
   }
 }
 
-function identifier(state, types) {
+function identifier(state/*, types */) {
   const id = state.read(Tokens.IDENTIFIER);
   return new ZB.Identifier(id.text);
 }
 
-function stringLiteral(state, types) {
+function stringLiteral(state/*, types */) {
   const t = state.read();
   let value = t.text;
   let elements = [];
@@ -102,7 +103,7 @@ function stringLiteral(state, types) {
   return new ZB.Interpolation(parsedElements);
 }
 
-function literal(state, types) {
+function literal(state/*, types */) {
   const t = state.read();
   let type, value = t.text;
   switch (t.type) {
@@ -150,6 +151,7 @@ function fcallExpr(state, types) {
         var arg = expression(state, types);
         state.read(Tokens.RPAREN);
         lOperand = new ZB.FCallExpression(lOperand, [ arg ]);
+        break;
 
       default:
         return lOperand;
@@ -229,7 +231,7 @@ function typeHint(state, types) {
     } while (state.tryRead(Tokens.SEP));
     state.read(Tokens.MORE);
   }
-  return types.createReference(name, args);
+  return types.get(name).createInstance(args);
 }
 
 function parameter(state, types) {
@@ -282,7 +284,7 @@ function declarations(state, types) {
 
 function parse(tokens) {
   const state = new ParseState(tokens);
-  const types = new TypeSystem();
+  const types = registerBuiltIns(new TypeSystem());
   const decls = declarations(state, types);
   return new ZB.Module(decls);
 }

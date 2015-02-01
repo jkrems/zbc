@@ -1,3 +1,4 @@
+/* global describe, it */
 'use strict';
 const assert = require('assertive');
 const _ = require('lodash');

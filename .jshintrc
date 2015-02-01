@@ -1,0 +1,15 @@
+{
+  "node": true,
+  "esnext": true,
+  "curly": true,
+  "eqeqeq": true,
+  "freeze": true,
+  "funcscope": true,
+  "indent": 2,
+  "newcap": true,
+  "noarg": true,
+  "nonbsp": true,
+  "undef": true,
+  "unused": true,
+  "eqnull": true
+}

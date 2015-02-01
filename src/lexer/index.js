@@ -10,7 +10,7 @@ const makeOperatorScanner = require('./operator-scanner');
 
 class Lexer {
   constructor(source, initial, options) {
-    if (!options) options = {};
+    if (!options) { options = {}; }
 
     this.source = source;
     this.maxIdx = options.maxIdx || source.length;

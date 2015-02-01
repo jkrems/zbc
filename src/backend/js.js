@@ -36,7 +36,7 @@ function callMain() {
 }
 
 function toJSType(type) {
-  const base = type.name;
+  const base = type.type.name;
   const args = type.args;
   if (args.length > 0) {
     return base + '.<' + args.map(toJSType) + '>';

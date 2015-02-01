@@ -4,13 +4,15 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "mocha --harmony"
+    "test": "mocha --harmony",
+    "lint": "jshint src"
   },
   "author": "Jan Krems <jan.krems@gmail.com>",
   "license": "MIT",
   "devDependencies": {
     "6to5": "^3.0.15",
     "assertive": "^1.4.1",
+    "jshint": "^2.6.0",
     "mocha": "^2.1.0"
   },
   "dependencies": {

@@ -50,7 +50,7 @@ _.each(NODE_SPEC, function(fields, name) {
     for (let field of fields) {
       this[field] = arguments[idx++];
     }
-  }
+  };
   exports[name].prototype = Object.create(Node.prototype, {
     _nodeType: {
       value: name

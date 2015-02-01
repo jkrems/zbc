@@ -1,3 +1,4 @@
+/* global describe, it, before */
 'use strict';
 
 const assert = require('assertive');
