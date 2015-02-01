@@ -259,9 +259,10 @@ function parameterList(state, types) {
 
 function declaration(state, types) {
   let visibility = 'private';
+  let modifier = state.tryRead(Tokens.VISIBILITY);
 
-  if (state.next.type === Tokens.VISIBILITY) {
-    visibility = state.read(Tokens.VISIBILITY).text;
+  if (modifier !== null) {
+    visibility = modifier.text;
   }
 
   const id = identifier(state, types);
@@ -278,7 +279,9 @@ function declaration(state, types) {
 
 function declarations(state, types) {
   const decls = [];
-  decls.push(declaration(state, types));
+  while (state.next) {
+    decls.push(declaration(state, types));
+  }
   return decls;
 }
 

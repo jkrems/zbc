@@ -10,7 +10,22 @@ const parse = require('../../src/parser');
 const js = require('../../src/backend/js');
 
 describe('js', function() {
-  it('does stuff', function() {
+  it('hello.zb', function() {
+    const source = fs.readFileSync('examples/hello.zb', 'utf8');
+    const tokens = scan(source);
+    const ast = parse(tokens);
+
+    const jsAst = js(ast);
+    const jsSource = escodegen.generate(jsAst, {
+      indent: '  ',
+      comment: true
+    });
+    fs.writeFileSync('examples/hello.js', jsSource);
+
+    console.log('\n--- in:\n%s\n--- out:\n%s', source, jsSource);
+  });
+
+  it('demo.zb', function() {
     const source = fs.readFileSync('examples/demo.zb', 'utf8');
     const tokens = scan(source);
     const ast = parse(tokens);
