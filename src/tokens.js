@@ -8,7 +8,8 @@ const TokenTypes = [
   'EOL', // ';'
   'LESS', 'MORE', // < / >
   'LPAREN', 'RPAREN', 'LBRACE', 'RBRACE',
-  'SEP', 'COLON'
+  'SEP', 'COLON',
+  'RETURN'
 ];
 
 for (let type of TokenTypes) {

@@ -111,9 +111,10 @@ function scanString(lexer) {
   return scanRoot;
 }
 
-const KEYWORDS = {
-  'public': Tokens.VISIBILITY
-};
+const KEYWORDS = Object.create(null, {
+  'public': { value: Tokens.VISIBILITY },
+  'return': { value: Tokens.RETURN }
+});
 function scanIdentifier(lexer) {
   do { lexer.next(); } while (isIdentPart(lexer.c));
   const text = lexer.currentText();

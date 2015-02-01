@@ -1,0 +1,5 @@
+main(argv) {
+  process.stdout << "Hello World\n";
+  # x << "foo";
+  7;
+}

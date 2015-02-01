@@ -6,6 +6,7 @@ const NODE_SPEC = {
   Module: [ 'body' ],
   FunctionDeclaration: [ 'id', 'params', 'body', 'visibility' ],
   Assignment: [ 'target', 'value' ],
+  Return: [ 'value' ],
   BinaryExpression: [ 'left', 'op', 'right' ],
   UnaryExpression: [ 'op', 'right' ],
   FCallExpression: [ 'callee', 'args' ],

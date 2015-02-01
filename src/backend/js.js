@@ -18,24 +18,99 @@ function callMain() {
       }
     },
     consequent: {
-      type: 'ExpressionStatement',
-      expression: {
-        type: 'CallExpression',
-        callee: { type: 'Identifier', name: 'main' },
-        arguments: [
-          {
+      type: 'BlockStatement',
+      body: [ {
+        type: 'ExpressionStatement',
+        expression: {
+          type: 'CallExpression',
+          callee: {
             type: 'MemberExpression',
-            object: { type: 'Identifier', name: 'process' },
-            property: { type: 'Identifier', name: 'argv' },
-            computed: false
-          }
-        ]
-      }
+            object: {
+              type: 'NewExpression',
+              callee: { type: 'Identifier', name: 'Promise' },
+              arguments: [
+                {
+                  type: 'ArrowFunctionExpression',
+                  params: [
+                    { type: 'Identifier', name: 'resolve' }
+                  ],
+                  expression: false,
+                  body: {
+                    type: 'BlockStatement',
+                    body: [ {
+                      type: 'ExpressionStatement',
+                      expression: {
+                        type: 'CallExpression',
+                        callee: { type: 'Identifier', name: 'resolve' },
+                        arguments: [
+                          {
+                            type: 'CallExpression',
+                            callee: { type: 'Identifier', name: 'main' },
+                            arguments: [
+                              {
+                                type: 'MemberExpression',
+                                object: { type: 'Identifier', name: 'process' },
+                                property: { type: 'Identifier', name: 'argv' },
+                                computed: false
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    } ]
+                  }
+                }
+              ]
+            },
+            property: { type: 'Identifier', name: 'then' }
+          },
+          arguments: [
+            {
+              type: 'MemberExpression',
+              object: { type: 'Identifier', name: 'process' },
+              property: { type: 'Identifier', name: 'exit' }
+            },
+            {
+              type: 'ArrowFunctionExpression',
+              params: [ { type: 'Identifier', name: 'error' } ],
+              expression: false,
+              body: {
+                type: 'BlockStatement',
+                body: [ {
+                  type: 'ExpressionStatement',
+                  expression: {
+                    type: 'CallExpression',
+                    callee: { type: 'Identifier', name: 'setImmediate' },
+                    arguments: [
+                      {
+                        type: 'ArrowFunctionExpression',
+                        params: [],
+                        expression: false,
+                        body: {
+                          type: 'BlockStatement',
+                          body: [
+                            {
+                              type: 'ThrowStatement',
+                              argument: { type: 'Identifier', name: 'error' }
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                } ]
+              }
+            }
+          ]
+        }
+      } ]
     }
   };
 }
 
 function toJSType(type) {
+  if (!type || !type.type) { return '?'; }
+
   const base = type.type.name;
   const args = type.args;
   if (args.length > 0) {
@@ -75,6 +150,13 @@ const transforms = {
       body: {
         type: 'BlockStatement',
         body: node.body.map(function(expr, idx) {
+          if (expr.getNodeType() === 'Return') {
+            return {
+              type: 'ReturnStatement',
+              argument: toJS(expr.value)
+            };
+          }
+
           if (idx + 1 < node.body.length) {
             if (expr.getNodeType() === 'Assignment') {
               return toJS(expr);
@@ -83,11 +165,12 @@ const transforms = {
               type: 'ExpressionStatement',
               expression: toJS(expr)
             };
+          } else {
+            return {
+              type: 'ReturnStatement',
+              argument: toJS(expr)
+            };
           }
-          return {
-            type: 'ReturnStatement',
-            argument: toJS(expr)
-          };
         })
       }
     };

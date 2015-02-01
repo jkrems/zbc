@@ -195,25 +195,30 @@ function block(state, types) {
 
   const content = [];
   while (state.next.type !== Tokens.RBRACE) {
-    const left = expression(state, types);
-    let hint = null;
-
-    if (state.tryRead(Tokens.COLON)) {
-      hint = typeHint(state, types);
-    }
-
-    if (state.next.type === Tokens.ASSIGN) {
-      state.read(Tokens.ASSIGN);
-      if (!isLExpr(left)) {
-        throw new Error('Invalid l-expr: ' + left);
-      }
-      const right = expression(state, types);
-      left.setType(hint);
-      content.push(new ZB.Assignment(left, right));
-    } else if (hint === null) {
-      content.push(left);
+    if (state.tryRead(Tokens.RETURN)) {
+      const returnValue = expression(state, types);
+      content.push(new ZB.Return(returnValue));
     } else {
-      throw new Error('Unexpected type hint');
+      const left = expression(state, types);
+      let hint = null;
+
+      if (state.tryRead(Tokens.COLON)) {
+        hint = typeHint(state, types);
+      }
+
+      if (state.next.type === Tokens.ASSIGN) {
+        state.read(Tokens.ASSIGN);
+        if (!isLExpr(left)) {
+          throw new Error('Invalid l-expr: ' + left);
+        }
+        const right = expression(state, types);
+        left.setType(hint);
+        content.push(new ZB.Assignment(left, right));
+      } else if (hint === null) {
+        content.push(left);
+      } else {
+        throw new Error('Unexpected type hint');
+      }
     }
     state.read(Tokens.EOL);
   }
