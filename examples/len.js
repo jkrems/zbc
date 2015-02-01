@@ -2,8 +2,7 @@
  * @param argv {Array.<String>}
  */
 function main(argv) {
-  process.stdout.write('Hello World\n');
-  return 0;
+  return argv.length - 2;
 }
 if (require.main === module) {
   new Promise(resolve => {

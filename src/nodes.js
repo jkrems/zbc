@@ -2,15 +2,17 @@
 
 const _ = require('lodash');
 
+const UnknownType = require('./type-system/unknown');
+
 const NODE_SPEC = {
-  Module: [ 'body' ],
+  Module: [ 'body', 'types' ],
   FunctionDeclaration: [ 'id', 'params', 'body', 'visibility' ],
   Assignment: [ 'target', 'value' ],
   Return: [ 'value' ],
   BinaryExpression: [ 'left', 'op', 'right' ],
   UnaryExpression: [ 'op', 'right' ],
   FCallExpression: [ 'callee', 'args' ],
-  Literal: [ 'value', 'type' ],
+  Literal: [ 'value' ],
   Interpolation: [ 'elements' ],
   Identifier: [ 'name' ]
 };
@@ -18,7 +20,7 @@ const NODE_SPEC = {
 class Node {
   constructor() {
     this._location = null;
-    this.type = null;
+    this.type = new UnknownType();
   }
 
   getNodeType() {

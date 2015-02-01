@@ -12,8 +12,15 @@ export function main(argv) {
 `);
   stdout.write(argv.map(x => x.length).join(' :: '));
   stdout.write('\n');
-  return stdout.write(`Hello ${ name }!
+  stdout.write(`Hello ${ name }!
 `);
 }
-if (require.main === module)
-  main(process.argv);
+if (require.main === module) {
+  new Promise(resolve => {
+    resolve(main(process.argv));
+  }).then(process.exit, error => {
+    setImmediate(() => {
+      throw error;
+    });
+  });
+}

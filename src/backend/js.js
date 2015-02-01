@@ -134,6 +134,22 @@ const transforms = {
   },
 
   FunctionDeclaration: function(node) {
+    const statements = node.body.map(function(expr, idx) {
+      if (expr.getNodeType() === 'Return') {
+        return {
+          type: 'ReturnStatement',
+          argument: toJS(expr.value)
+        };
+      } else if (expr.getNodeType() === 'Assignment') {
+        return toJS(expr);
+      } else {
+        return {
+          type: 'ExpressionStatement',
+          expression: toJS(expr)
+        };
+      }
+    });
+
     const decl = {
       type: 'FunctionDeclaration',
       id: {
@@ -149,29 +165,7 @@ const transforms = {
       expression: false,
       body: {
         type: 'BlockStatement',
-        body: node.body.map(function(expr, idx) {
-          if (expr.getNodeType() === 'Return') {
-            return {
-              type: 'ReturnStatement',
-              argument: toJS(expr.value)
-            };
-          }
-
-          if (idx + 1 < node.body.length) {
-            if (expr.getNodeType() === 'Assignment') {
-              return toJS(expr);
-            }
-            return {
-              type: 'ExpressionStatement',
-              expression: toJS(expr)
-            };
-          } else {
-            return {
-              type: 'ReturnStatement',
-              argument: toJS(expr)
-            };
-          }
-        })
+        body: statements
       }
     };
     const outNode = (node.visibility === 'public') ?

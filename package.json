@@ -2,7 +2,7 @@
   "name": "zbc",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "src/zoidberg.js",
   "scripts": {
     "test": "mocha --harmony",
     "lint": "jshint src"

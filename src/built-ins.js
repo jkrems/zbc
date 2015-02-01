@@ -16,7 +16,7 @@ class BaseType {
 
   createInstance(args) {
     args = args || [];
-    if (args.length !== this.params.length) {
+    if (this.params && args.length !== this.params.length) {
       throw new Error(
         `${this.toString()} expects ${this.params.length}, used with ${args.length} argument(s)`);
     }
@@ -39,13 +39,14 @@ class TypeInstance {
 }
 
 function registerBuiltIns(types) {
-  types.register('String');
+  types.register('String', []);
   types.register('Array', [ 'ItemType' ]);
-  types.register('Void');
-  types.register('Char');
-  types.register('Int');
-  types.register('Float');
-  types.register('Stream');
+  types.register('Void', []);
+  types.register('Char', []);
+  types.register('Int', []);
+  types.register('Float', []);
+  types.register('Stream', []);
+  types.register('Function');
   return types;
 }
 

@@ -36,7 +36,7 @@ function identifier(state/*, types */) {
   return new ZB.Identifier(id.text);
 }
 
-function stringLiteral(state/*, types */) {
+function stringLiteral(state, types) {
   const t = state.read();
   let value = t.text;
   let elements = [];
@@ -81,29 +81,31 @@ function stringLiteral(state/*, types */) {
     elements.push(buffer);
   }
 
+  const strType = types.get('String').createInstance();
+
   const parsedElements = elements.map(function(e) {
     if (typeof e === 'string') {
-      return new ZB.Literal(e, 'String');
+      return new ZB.Literal(e).setType(strType);
     }
     // TODO: actually lex/parse the expression
     return new ZB.Identifier(e.expr);
   });
 
   if (parsedElements[0].getNodeType() !== 'Literal' ||
-      parsedElements[0].type !== 'String') {
-    parsedElements.unshift(new ZB.Literal('', 'String'));
+      !parsedElements[0].type.equals(strType)) {
+    parsedElements.unshift(new ZB.Literal('').setType(strType));
   }
 
   // TODO: collapse string literals (?)
 
   if (parsedElements.length === 1) {
-    return new ZB.Literal(elements[0], 'String');
+    return new ZB.Literal(elements[0]).setType(strType);
   }
 
-  return new ZB.Interpolation(parsedElements);
+  return new ZB.Interpolation(parsedElements).setType(strType);
 }
 
-function literal(state/*, types */) {
+function literal(state, types) {
   const t = state.read();
   let type, value = t.text;
   switch (t.type) {
@@ -113,7 +115,8 @@ function literal(state/*, types */) {
     default:
       throw new Error(`Invalid literal: ${t.type.toString()}`);
   }
-  return new ZB.Literal(value, type);
+  return new ZB.Literal(value)
+    .setType(types.get(type).createInstance());
 }
 
 function valueExpr(state, types) {
@@ -276,10 +279,37 @@ function declaration(state, types) {
   let returnType = null;
   if (state.tryRead(Tokens.COLON)) {
     returnType = typeHint(state, types);
+  } else {
+    returnType = types.createUnknown();
   }
 
-  const body = block(state, types);
-  return new ZB.FunctionDeclaration(id, params, body, visibility);
+  const nonVoid = returnType.type !== types.get('Void');
+  const statements = block(state, types);
+  const last = statements[statements.length - 1];
+
+  if (nonVoid && !last) {
+    throw new Error('Non-void function with empty body');
+  }
+
+  const body = (last.getNodeType() !== 'Return' && nonVoid) ?
+    // Auto-return last statement for non-void functions
+    statements.slice(0, statements.length - 1).concat(
+      new ZB.Return(last).setType(last.getType())
+    ) : statements;
+
+  const paramTypes = params.map(function(param) {
+    return param.type;
+  });
+
+  if (nonVoid) {
+    returnType.merge(last.type);
+  }
+
+  const ftype = types.get('Function')
+    .createInstance(paramTypes.concat([ returnType ]));
+
+  return new ZB.FunctionDeclaration(id, params, body, visibility)
+    .setType(ftype);
 }
 
 function declarations(state, types) {
@@ -290,11 +320,14 @@ function declarations(state, types) {
   return decls;
 }
 
-function parse(tokens) {
+function parse(tokens, globalTypes) {
+  if (!globalTypes) {
+    globalTypes = registerBuiltIns(new TypeSystem());
+  }
   const state = new ParseState(tokens);
-  const types = registerBuiltIns(new TypeSystem());
+  const types = globalTypes.createScope();
   const decls = declarations(state, types);
-  return new ZB.Module(decls);
+  return new ZB.Module(decls, types);
 }
 
 module.exports = parse;

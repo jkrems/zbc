@@ -1,14 +1,18 @@
 'use strict';
 
+const UnknownType = require('./unknown');
+
 class BaseType {
   constructor(name, params, id) {
     this.name = name;
-    this.params = params || [];
+    this.params = params || undefined;
     this.id = id || Symbol(name);
   }
 
   toString() {
-    if (this.params.length) {
+    if (this.params === undefined) {
+      return `${this.name}<...>`;
+    } else if (this.params.length) {
       return `${this.name}<${this.params.join(', ')}>`;
     }
     return this.name;
@@ -16,7 +20,7 @@ class BaseType {
 
   createInstance(args) {
     args = args || [];
-    if (args.length !== this.params.length) {
+    if (this.params && args.length !== this.params.length) {
       throw new Error(
         `${this.toString()} expects ${this.params.length}, used with ${args.length} argument(s)`);
     }
@@ -32,9 +36,36 @@ class TypeInstance {
 
   toString() {
     if (this.args.length) {
-      return `${this.name}<${this.args.join(', ')}>`;
+      return `${this.type.name}<${this.args.join(', ')}>`;
     }
-    return this.name;
+    return this.type.name;
+  }
+
+  resolved() {
+    return this;
+  }
+
+  equals(other) {
+    other = other.resolved();
+    return other.type === this.type &&
+      other.args.length === this.args.length &&
+      this.args.every(function(arg, idx) {
+        return arg.equals(other.args[idx]);
+      });
+  }
+
+  merge(other) {
+    other = other.resolved();
+    if (other instanceof UnknownType) {
+      return other.merge(this);
+    }
+    if (this.type !== other.type) {
+      throw new Error(`Incompatible: ${this} vs. ${other}`);
+    }
+    this.args.forEach(function(arg, idx) {
+      arg.merge(other.args[idx]);
+    });
+    return this;
   }
 }
 
@@ -46,6 +77,10 @@ class TypeSystem {
 
   createScope() {
     return new TypeSystem(this);
+  }
+
+  createUnknown() {
+    return new UnknownType(this);
   }
 
   register(name, params) {
