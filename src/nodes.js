@@ -21,6 +21,11 @@ class Node {
   constructor() {
     this._location = null;
     this.type = new UnknownType();
+    this.childNodes = [];
+  }
+
+  getChildNodes() {
+    return this.childNodes;
   }
 
   getNodeType() {
@@ -44,6 +49,21 @@ class Node {
   getType() {
     return this.type;
   }
+
+  addChildIfNode(value) {
+    if (value instanceof Node) {
+      this.childNodes.push(value);
+    }
+  }
+
+  setAttribute(field, value) {
+    this[field] = value;
+    if (Array.isArray(value)) {
+      value.forEach(this.addChildIfNode, this);
+    } else {
+      this.addChildIfNode(value);
+    }
+  }
 }
 
 _.each(NODE_SPEC, function(fields, name) {
@@ -51,7 +71,7 @@ _.each(NODE_SPEC, function(fields, name) {
     Node.call(this);
     let idx = 0;
     for (let field of fields) {
-      this[field] = arguments[idx++];
+      this.setAttribute(field, arguments[idx++]);
     }
   };
   exports[name].prototype = Object.create(Node.prototype, {

@@ -13,7 +13,11 @@ class UnknownType {
   }
 
   toString() {
-    return this.actual ? this.actual.toString() : '?';
+    const self = this.resolved();
+    if (self instanceof UnknownType) {
+      return '?';
+    }
+    return self.toString();
   }
 
   equals(other) {
@@ -26,6 +30,10 @@ class UnknownType {
   merge(other) {
     other = other.resolved();
     const self = this.resolved();
+    if (other === self) {
+      return self;
+    }
+
     if (self instanceof UnknownType) {
       self.actual = other;
       return other;

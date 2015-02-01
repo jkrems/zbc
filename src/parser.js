@@ -215,7 +215,7 @@ function block(state, types) {
           throw new Error('Invalid l-expr: ' + left);
         }
         const right = expression(state, types);
-        left.setType(hint);
+        if (hint) { left.setType(hint); }
         content.push(new ZB.Assignment(left, right));
       } else if (hint === null) {
         content.push(left);
@@ -291,7 +291,7 @@ function declaration(state, types) {
     throw new Error('Non-void function with empty body');
   }
 
-  const body = (last.getNodeType() !== 'Return' && nonVoid) ?
+  const body = (nonVoid && last.getNodeType() !== 'Return') ?
     // Auto-return last statement for non-void functions
     statements.slice(0, statements.length - 1).concat(
       new ZB.Return(last).setType(last.getType())
