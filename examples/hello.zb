@@ -1,5 +1,6 @@
+extern process;
+
 main(argv: Array<String>) {
   process.stdout << "Hello World\n";
-  # x << "foo";
   0;
 }

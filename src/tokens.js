@@ -2,7 +2,7 @@
 
 const TokenTypes = [
   'INT', 'CHAR', 'STRING', 'FLOAT', 'IDENTIFIER',
-  'ASSIGN', 'VISIBILITY',
+  'ASSIGN', 'VISIBILITY', 'EXTERN',
   'MEMBER_ACCESS', // '.' / '->'
   'BINARY', 'UNARY', 'UNARY_OR_BINARY',
   'EOL', // ';'

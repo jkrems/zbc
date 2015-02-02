@@ -113,6 +113,7 @@ function scanString(lexer) {
 
 const KEYWORDS = Object.create(null, {
   'public': { value: Tokens.VISIBILITY },
+  'extern': { value: Tokens.EXTERN },
   'return': { value: Tokens.RETURN }
 });
 function scanIdentifier(lexer) {

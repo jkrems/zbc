@@ -10,6 +10,7 @@ class ParseState {
     this.tokens = tokens;
     this.idx = 0;
     this.next = tokens[0];
+    this.noTry = false;
   }
 
   read(type) {
@@ -29,11 +30,31 @@ class ParseState {
       return null;
     }
   }
+
+  endTry() {
+    this.noTry = true;
+  }
+
+  try(attempt, orElse) {
+    const tmpState = new ParseState(this.tokens);
+    tmpState.idx = this.idx;
+    tmpState.next = this.next;
+    let result;
+    try {
+      result = attempt(tmpState);
+      this.idx = tmpState.idx;
+      this.next = tmpState.next;
+    } catch (err) {
+      if (tmpState.noTry) { throw err; }
+      result = orElse(this);
+    }
+    return result;
+  }
 }
 
-function identifier(state/*, types */) {
-  const id = state.read(Tokens.IDENTIFIER);
-  return new ZB.Identifier(id.text);
+function identifier(state, types) {
+  const name = state.read(Tokens.IDENTIFIER).text;
+  return new ZB.Identifier(name).setType(types.resolveId(name));
 }
 
 function stringLiteral(state, types) {
@@ -88,7 +109,7 @@ function stringLiteral(state, types) {
       return new ZB.Literal(e).setType(strType);
     }
     // TODO: actually lex/parse the expression
-    return new ZB.Identifier(e.expr);
+    return new ZB.Identifier(e.expr).setType(types.resolveId(e.expr));
   });
 
   if (parsedElements[0].getNodeType() !== 'Literal' ||
@@ -141,11 +162,12 @@ function valueExpr(state, types) {
 function fcallExpr(state, types) {
   let lOperand = valueExpr(state, types);
   while (true) {
-    let op, rOperand;
+    let op, rOperand, field;
     switch (state.next.type) {
       case Tokens.MEMBER_ACCESS:
         op = state.read(Tokens.MEMBER_ACCESS);
-        rOperand = identifier(state, types);
+        field = state.read(Tokens.IDENTIFIER).text;
+        rOperand = new ZB.Identifier(field);
         lOperand = new ZB.BinaryExpression(lOperand, op.text, rOperand);
         break;
 
@@ -202,28 +224,30 @@ function block(state, types) {
       const returnValue = expression(state, types);
       content.push(new ZB.Return(returnValue));
     } else {
-      const left = expression(state, types);
-      let hint = null;
-
-      if (state.tryRead(Tokens.COLON)) {
-        hint = typeHint(state, types);
-      }
-
-      if (state.next.type === Tokens.ASSIGN) {
-        state.read(Tokens.ASSIGN);
-        if (!isLExpr(left)) {
-          throw new Error('Invalid l-expr: ' + left);
+      state.try(
+        function(s) {
+          const name = s.read(Tokens.IDENTIFIER).text;
+          const target = new ZB.Identifier(name);
+          let hint = null;
+          if (s.tryRead(Tokens.COLON)) {
+            s.endTry(); // Yep, it's an assignment
+            hint = typeHint(s, types);
+          }
+          s.read(Tokens.ASSIGN);
+          s.endTry(); // Yep, it's an assignment
+          const value = expression(s, types);
+          s.read(Tokens.EOL);
+          if (hint) { target.setType(hint); }
+          types.registerId(name, target.type);
+          content.push(new ZB.Assignment(target, value));
+        },
+        function(s) {
+          const expr = expression(s, types);
+          s.read(Tokens.EOL);
+          content.push(expr);
         }
-        const right = expression(state, types);
-        if (hint) { left.setType(hint); }
-        content.push(new ZB.Assignment(left, right));
-      } else if (hint === null) {
-        content.push(left);
-      } else {
-        throw new Error('Unexpected type hint');
-      }
+      );
     }
-    state.read(Tokens.EOL);
   }
 
   state.read(Tokens.RBRACE);
@@ -243,10 +267,12 @@ function typeHint(state, types) {
 }
 
 function parameter(state, types) {
-  const id = identifier(state, types);
+  const name = state.read(Tokens.IDENTIFIER).text;
+  const id = new ZB.Identifier(name);
   if (state.tryRead(Tokens.COLON)) {
     id.setType(typeHint(state, types));
   }
+  types.registerId(name, id.type);
   return id;
 }
 
@@ -265,15 +291,34 @@ function parameterList(state, types) {
   return params;
 }
 
-function declaration(state, types) {
+function externDeclaration(state, types) {
+  // Extern considered already read
+  state.read(Tokens.EXTERN);
+  const name = state.read(Tokens.IDENTIFIER).text;
+  const id = new ZB.Identifier(name);
+  types.registerId(name, id.type);
+  state.read(Tokens.EOL);
+  return new ZB.ExternDeclaration(id).setType(id.type);
+}
+
+function declaration(state, parentScope) {
+  if (state.next.type === Tokens.EXTERN) {
+    return externDeclaration(state, parentScope);
+  }
+
   let visibility = 'private';
+
   let modifier = state.tryRead(Tokens.VISIBILITY);
 
   if (modifier !== null) {
     visibility = modifier.text;
   }
 
-  const id = identifier(state, types);
+  const types = parentScope.createScope();
+
+  const name = state.read(Tokens.IDENTIFIER).text;
+  const id = new ZB.Identifier(name);
+  parentScope.registerId(name, id.type);
   const params = parameterList(state, types);
 
   let returnType = null;
@@ -282,6 +327,11 @@ function declaration(state, types) {
   } else {
     returnType = types.createUnknown();
   }
+
+  const paramTypes = params.map(function(param) {
+    types.registerId(param);
+    return param.type;
+  });
 
   const nonVoid = returnType.type !== types.get('Void');
   const statements = block(state, types);
@@ -297,10 +347,6 @@ function declaration(state, types) {
       new ZB.Return(last).setType(last.getType())
     ) : statements;
 
-  const paramTypes = params.map(function(param) {
-    return param.type;
-  });
-
   if (nonVoid) {
     returnType.merge(last.type);
   }
@@ -309,7 +355,7 @@ function declaration(state, types) {
     .createInstance(paramTypes.concat([ returnType ]));
 
   return new ZB.FunctionDeclaration(id, params, body, visibility)
-    .setType(ftype);
+    .setType(ftype, parentScope);
 }
 
 function declarations(state, types) {

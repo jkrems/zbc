@@ -1,5 +1,7 @@
+/* global process */
 /*
  * @param argv {Array.<String>}
+ * @returns {Void}
  */
 export function main(argv) {
   const c = 'c';

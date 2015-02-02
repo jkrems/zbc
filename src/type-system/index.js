@@ -72,6 +72,7 @@ class TypeInstance {
 class TypeSystem {
   constructor(parent) {
     this._scope = new Map();
+    this._ids = new Map();
     this._parent = parent || null;
   }
 
@@ -81,6 +82,21 @@ class TypeSystem {
 
   createUnknown() {
     return new UnknownType(this);
+  }
+
+  registerId(id, type) {
+    this._ids.set(id, type);
+    return type;
+  }
+
+  resolveId(id) {
+    if (this._ids.has(id)) {
+      return this._ids.get(id);
+    } else if (this._parent !== null) {
+      return this._parent.resolveId(id);
+    } else {
+      throw new Error(`Unknown identifier: ${id}`);
+    }
   }
 
   register(name, params) {

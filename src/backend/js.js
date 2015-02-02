@@ -121,15 +121,43 @@ function toJSType(type) {
 
 const transforms = {
   Module: function(node) {
-    const body = node.body.map(toJS);
+    let body = node.body.map(toJS);
     const hasMain = node.body.some(function(decl) {
       return decl.getNodeType() === 'FunctionDeclaration' &&
              decl.id.name === 'main';
     });
+
+    let comments = [];
+
+    body = body.filter(function(n) {
+      if (n.type === 'EmptyStatement') {
+        comments = comments.concat(n.leadingComments);
+        return false;
+      }
+      return true;
+    });
+
     if (hasMain) {
-      return { type: 'Program', body: body.concat(callMain()) };
+      return {
+        type: 'Program',
+        body: body.concat(callMain()),
+        leadingComments: comments
+      };
     } else {
-      return { type: 'Program', body: body };
+      return {
+        type: 'Program',
+        body: body,
+        leadingComments: comments
+      };
+    }
+  },
+
+  ExternDeclaration: function(node) {
+    return {
+      type: 'EmptyStatement',
+      leadingComments: [
+        { value: ` global ${node.id.name} `}
+      ]
     }
   },
 
@@ -171,12 +199,17 @@ const transforms = {
     const outNode = (node.visibility === 'public') ?
       { type: 'ExportDeclaration', declaration: decl } : decl;
 
-    outNode.leadingComments = node.params.map(function(param) {
-      return {
-        range: 10,
-        value: `\n * @param ${param.name} {${toJSType(param.type)}}\n `
-      };
-    });
+    const retType = node.getReturnType();
+
+    const jsDoc = '\n' +
+      node.params.map(function(param) {
+        return ` * @param ${param.name} {${toJSType(param.type)}}`;
+      }).concat([
+        ` * @returns {${toJSType(retType)}}`
+      ]).join('\n') +
+      '\n ';
+
+    outNode.leadingComments = [ { value: jsDoc } ];
 
     return outNode;
   },

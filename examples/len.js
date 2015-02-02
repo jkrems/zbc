@@ -1,5 +1,6 @@
 /*
  * @param argv {Array.<String>}
+ * @returns {?}
  */
 function main(argv) {
   return argv.length - 2;

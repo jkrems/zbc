@@ -6,6 +6,7 @@ const UnknownType = require('./type-system/unknown');
 
 const NODE_SPEC = {
   Module: [ 'body', 'types' ],
+  ExternDeclaration: [ 'id' ],
   FunctionDeclaration: [ 'id', 'params', 'body', 'visibility' ],
   Assignment: [ 'target', 'value' ],
   Return: [ 'value' ],
@@ -80,3 +81,10 @@ _.each(NODE_SPEC, function(fields, name) {
     }
   });
 });
+
+exports.FunctionDeclaration.prototype.getReturnType =
+function getReturnType() {
+  const type = this.type.resolved();
+  const lastArg = type.args[type.args.length - 1];
+  return lastArg.resolved();
+};

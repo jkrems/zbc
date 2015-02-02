@@ -1,3 +1,5 @@
+extern process;
+
 public main(argv: Array<String>): Void {
   # The other primitive types
   c: Char = 'c'; n: Int = 42; f: Float = 0.2;

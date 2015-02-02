@@ -10,7 +10,7 @@ describe('parse', function() {
   describe('Hello World', function() {
     before(function() {
       this.tokens = scan(`
-        main() {
+        main(stdout) {
           stdout << "Hi!\\n";
         }
       `);
