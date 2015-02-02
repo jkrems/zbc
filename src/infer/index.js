@@ -44,14 +44,28 @@ const mergeReturnTypes = makeTypeVisitor(
     ]);
   });
 
-const inferVisitors = [
-  bubbleAssign,
-  bubbleReturn,
-  mergeReturnTypes
-];
+function inferVisitors(types) {
+  const mainSignature = makeTypeVisitor(
+    'FunctionDeclaration', function(node) {
+      if (node.id.name !== 'main') { return; }
+      // main(argv: Array<String>): Int
+      const str = types.get('String').createInstance();
+      const int = types.get('Int').createInstance();
+      const strArr = types.get('Array').createInstance([ str ]);
+      const mainFn = types.get('Function').createInstance([ strArr, int ]);
+      node.type.merge(mainFn);
+    });
+
+  return [
+    bubbleAssign,
+    bubbleReturn,
+    mergeReturnTypes,
+    mainSignature
+  ];
+}
 
 function infer(ast) {
-  return walkTree(ast, inferVisitors);
+  return walkTree(ast, inferVisitors(ast.types));
 }
 module.exports = infer;
 module.exports.default = infer;

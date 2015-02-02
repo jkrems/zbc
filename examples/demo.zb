@@ -1,6 +1,6 @@
 extern process;
 
-public main(argv: Array<String>): Void {
+public main(argv: Array<String>) {
   # The other primitive types
   c: Char = 'c'; n: Int = 42; f: Float = 0.2;
 
@@ -12,4 +12,5 @@ public main(argv: Array<String>): Void {
   stdout << argv->length.join(" :: ");
   stdout << "\n";
   stdout << "Hello \{name}!\n";
+  0;
 }

@@ -1,7 +1,7 @@
 /* global process */
 /*
  * @param argv {Array.<String>}
- * @returns {Void}
+ * @returns {Int}
  */
 export function main(argv) {
   const c = 'c';
@@ -16,6 +16,7 @@ export function main(argv) {
   stdout.write('\n');
   stdout.write(`Hello ${ name }!
 `);
+  return 0;
 }
 if (require.main === module) {
   new Promise(resolve => {

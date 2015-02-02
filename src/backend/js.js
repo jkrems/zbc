@@ -109,7 +109,9 @@ function callMain() {
 }
 
 function toJSType(type) {
-  if (!type || !type.type) { return '?'; }
+  if (!type) { throw new Error('Missing type information'); }
+  type = type.resolved();
+  if (!type.type) { return '?'; }
 
   const base = type.type.name;
   const args = type.args;

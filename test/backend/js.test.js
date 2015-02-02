@@ -7,7 +7,7 @@ const zb = require('../..');
 
 describe('js', function() {
   it('len.zb', function() {
-    const source = `main(argv: Array<String>) {
+    const source = `main(argv) {
   argv.length - 2;
 }
 `;
