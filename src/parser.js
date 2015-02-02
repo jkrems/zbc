@@ -5,12 +5,27 @@ const ZB = require('./nodes');
 const TypeSystem = require('./type-system');
 const registerBuiltIns = require('./built-ins');
 
+class LocationTracker {
+  constructor(state) {
+    this.state = state;
+    this.start = state.next.position;
+  }
+
+  get() {
+    return this.start;
+  }
+}
+
 class ParseState {
   constructor(tokens) {
     this.tokens = tokens;
     this.idx = 0;
     this.next = tokens[0];
     this.noTry = false;
+  }
+
+  track() {
+    return new LocationTracker(this);
   }
 
   read(type) {
@@ -52,12 +67,28 @@ class ParseState {
   }
 }
 
-function identifier(state, types) {
+function tracked(fn) {
+  return function(state, types) {
+    const loc = state.track();
+    const result = fn(state, types);
+    if (typeof result.setLocation !== 'function') {
+      return result;
+    }
+    return result.setLocation(loc.get());
+  };
+};
+
+const rawIdentifier = tracked(function rawIdentifier(state, types) {
+  const name = state.read(Tokens.IDENTIFIER).text;
+  return new ZB.Identifier(name);
+});
+
+const identifier = tracked(function identifier(state, types) {
   const name = state.read(Tokens.IDENTIFIER).text;
   return new ZB.Identifier(name).setType(types.resolveId(name));
-}
+});
 
-function stringLiteral(state, types) {
+const stringLiteral = tracked(function stringLiteral(state, types) {
   const t = state.read();
   let value = t.text;
   let elements = [];
@@ -124,9 +155,9 @@ function stringLiteral(state, types) {
   }
 
   return new ZB.Interpolation(parsedElements).setType(strType);
-}
+});
 
-function literal(state, types) {
+const literal = tracked(function literal(state, types) {
   const t = state.read();
   let type, value = t.text;
   switch (t.type) {
@@ -138,9 +169,9 @@ function literal(state, types) {
   }
   return new ZB.Literal(value)
     .setType(types.get(type).createInstance());
-}
+});
 
-function valueExpr(state, types) {
+const valueExpr = tracked(function valueExpr(state, types) {
   const peek = state.next.type;
   if (peek === Tokens.IDENTIFIER) {
     return identifier(state, types);
@@ -157,18 +188,17 @@ function valueExpr(state, types) {
     return inner;
   }
   throw new Error(`Unexpected ${peek.toString()}`);
-}
+});
 
-function fcallExpr(state, types) {
+const fcallExpr = tracked(function fcallExpr(state, types) {
   let lOperand = valueExpr(state, types);
   while (true) {
-    let op, rOperand, field;
+    let op, rOperand;
     switch (state.next.type) {
       case Tokens.MEMBER_ACCESS:
         op = state.read(Tokens.MEMBER_ACCESS);
-        field = state.read(Tokens.IDENTIFIER).text;
-        rOperand = new ZB.Identifier(field);
-        lOperand = new ZB.BinaryExpression(lOperand, op.text, rOperand);
+        rOperand = rawIdentifier(state, types);
+        lOperand = new ZB.MemberAccess(lOperand, op.text, rOperand);
         break;
 
       case Tokens.LPAREN:
@@ -182,9 +212,9 @@ function fcallExpr(state, types) {
         return lOperand;
     }
   }
-}
+});
 
-function unaryExpr(state, types) {
+const unaryExpr = tracked(function unaryExpr(state, types) {
   const peek = state.next.type;
   let op;
   if (peek === Tokens.UNARY || peek === Tokens.UNARY_OR_BINARY) {
@@ -197,9 +227,9 @@ function unaryExpr(state, types) {
   } else {
     return value;
   }
-}
+});
 
-function expression(state, types) {
+const expression = tracked(function expression(state, types) {
   // See: http://en.cppreference.com/w/cpp/language/operator_precedence
   // unaryExpr [ ( binaryOp | unaryOp ) unaryExpr ]*
   let lOperand = unaryExpr(state, types);
@@ -209,25 +239,22 @@ function expression(state, types) {
     lOperand = new ZB.BinaryExpression(lOperand, op.text, rOperand);
   }
   return lOperand;
-}
-
-function isLExpr(node) {
-  return node.getNodeType() === 'Identifier';
-}
+});
 
 function block(state, types) {
   state.read(Tokens.LBRACE);
 
   const content = [];
   while (state.next.type !== Tokens.RBRACE) {
+    const loc = state.track();
     if (state.tryRead(Tokens.RETURN)) {
       const returnValue = expression(state, types);
-      content.push(new ZB.Return(returnValue));
+      content.push(
+        new ZB.Return(returnValue).setLocation(loc.get()));
     } else {
       state.try(
         function(s) {
-          const name = s.read(Tokens.IDENTIFIER).text;
-          const target = new ZB.Identifier(name);
+          const target = rawIdentifier(s, types);
           let hint = null;
           if (s.tryRead(Tokens.COLON)) {
             s.endTry(); // Yep, it's an assignment
@@ -238,8 +265,9 @@ function block(state, types) {
           const value = expression(s, types);
           s.read(Tokens.EOL);
           if (hint) { target.setType(hint); }
-          types.registerId(name, target.type);
-          content.push(new ZB.Assignment(target, value));
+          types.registerId(target.name, target.type);
+          content.push(
+            new ZB.Assignment(target, value).setLocation(loc.get()));
         },
         function(s) {
           const expr = expression(s, types);
@@ -254,7 +282,7 @@ function block(state, types) {
   return content;
 }
 
-function typeHint(state, types) {
+const typeHint = tracked(function typeHint(state, types) {
   const args = [];
   const name = state.read(Tokens.IDENTIFIER).text;
   if (state.tryRead(Tokens.LESS)) {
@@ -262,19 +290,22 @@ function typeHint(state, types) {
       args.push(typeHint(state, types));
     } while (state.tryRead(Tokens.SEP));
     state.read(Tokens.MORE);
+  } else if (state.tryRead(Tokens.LSQUARE)) {
+    state.read(Tokens.RSQUARE);
+    return types.get('Array').createInstance(
+      [ types.get(name).createInstance() ]);
   }
   return types.get(name).createInstance(args);
-}
+});
 
-function parameter(state, types) {
-  const name = state.read(Tokens.IDENTIFIER).text;
-  const id = new ZB.Identifier(name);
+const parameter = tracked(function parameter(state, types) {
+  const id = rawIdentifier(state, types);
   if (state.tryRead(Tokens.COLON)) {
     id.setType(typeHint(state, types));
   }
-  types.registerId(name, id.type);
+  types.registerId(id.name, id.type);
   return id;
-}
+});
 
 function parameterList(state, types) {
   state.read(Tokens.LPAREN);
@@ -291,20 +322,20 @@ function parameterList(state, types) {
   return params;
 }
 
-function externDeclaration(state, types) {
+const externDeclaration = tracked(function externDeclaration(state, types) {
   // Extern considered already read
   state.read(Tokens.EXTERN);
-  const name = state.read(Tokens.IDENTIFIER).text;
-  const id = new ZB.Identifier(name);
-  types.registerId(name, id.type);
+  const id = rawIdentifier(state, types);
+  types.registerId(id.name, id.type);
   state.read(Tokens.EOL);
   return new ZB.ExternDeclaration(id).setType(id.type);
-}
+});
 
-function declaration(state, parentScope) {
+const declaration = tracked(function declaration(state, parentScope) {
   if (state.next.type === Tokens.EXTERN) {
     return externDeclaration(state, parentScope);
   }
+  const loc = state.track();
 
   let visibility = 'private';
 
@@ -316,9 +347,8 @@ function declaration(state, parentScope) {
 
   const types = parentScope.createScope();
 
-  const name = state.read(Tokens.IDENTIFIER).text;
-  const id = new ZB.Identifier(name);
-  parentScope.registerId(name, id.type);
+  const id = rawIdentifier(state, types);
+  parentScope.registerId(id.name, id.type);
   const params = parameterList(state, types);
 
   let returnType = null;
@@ -344,7 +374,9 @@ function declaration(state, parentScope) {
   const body = (nonVoid && last.getNodeType() !== 'Return') ?
     // Auto-return last statement for non-void functions
     statements.slice(0, statements.length - 1).concat(
-      new ZB.Return(last).setType(last.getType())
+      new ZB.Return(last)
+        .setType(last.getType())
+        .setLocation(last.getLocation())
     ) : statements;
 
   if (nonVoid) {
@@ -355,8 +387,9 @@ function declaration(state, parentScope) {
     .createInstance(paramTypes.concat([ returnType ]));
 
   return new ZB.FunctionDeclaration(id, params, body, visibility)
-    .setType(ftype, parentScope);
-}
+    .setType(ftype, parentScope)
+    .setLocation(loc.get());
+});
 
 function declarations(state, types) {
   const decls = [];
@@ -366,14 +399,19 @@ function declarations(state, types) {
   return decls;
 }
 
+const rootRule = tracked(function rootRule(state, types) {
+  const decls = declarations(state, types);
+  return new ZB.Module(decls, types);
+});
+
 function parse(tokens, globalTypes) {
   if (!globalTypes) {
     globalTypes = registerBuiltIns(new TypeSystem());
   }
   const state = new ParseState(tokens);
+  const loc = state.track();
   const types = globalTypes.createScope();
-  const decls = declarations(state, types);
-  return new ZB.Module(decls, types);
+  return rootRule(state, types);
 }
 
 module.exports = parse;

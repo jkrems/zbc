@@ -7,7 +7,7 @@ const TokenTypes = [
   'BINARY', 'UNARY', 'UNARY_OR_BINARY',
   'EOL', // ';'
   'LESS', 'MORE', // < / >
-  'LPAREN', 'RPAREN', 'LBRACE', 'RBRACE',
+  'LPAREN', 'RPAREN', 'LBRACE', 'RBRACE', 'LSQUARE', 'RSQUARE',
   'SEP', 'COLON',
   'RETURN'
 ];

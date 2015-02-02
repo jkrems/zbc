@@ -10,6 +10,7 @@ const NODE_SPEC = {
   FunctionDeclaration: [ 'id', 'params', 'body', 'visibility' ],
   Assignment: [ 'target', 'value' ],
   Return: [ 'value' ],
+  MemberAccess: [ 'object', 'op', 'property' ],
   BinaryExpression: [ 'left', 'op', 'right' ],
   UnaryExpression: [ 'op', 'right' ],
   FCallExpression: [ 'callee', 'args' ],

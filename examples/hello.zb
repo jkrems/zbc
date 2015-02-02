@@ -1,6 +1,6 @@
 extern process;
 
-main(argv: Array<String>) {
+main(argv: String[]) {
   process.stdout << "Hello World\n";
   0;
 }

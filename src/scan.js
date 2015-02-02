@@ -24,6 +24,8 @@ const scanOperators = Lexer.makeOperatorScanner({
   ')': Tokens.RPAREN,
   '{': Tokens.LBRACE,
   '}': Tokens.RBRACE,
+  '[': Tokens.LSQUARE,
+  ']': Tokens.RSQUARE,
   ',': Tokens.SEP
 }, scanRoot);
 

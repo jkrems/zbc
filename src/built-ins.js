@@ -39,14 +39,25 @@ class TypeInstance {
 }
 
 function registerBuiltIns(types) {
-  types.register('String', []);
-  types.register('Array', [ 'ItemType' ]);
+  const Int = types.register('Int', []);
+  const Str = types.register('String', [])
+    .addProperty('length', Int);
+  const Arr = types.register('Array', [ 'ItemType' ])
+    .addProperty('length', Int);
   types.register('Void', []);
   types.register('Char', []);
-  types.register('Int', []);
   types.register('Float', []);
-  types.register('Stream', []);
-  types.register('Function');
+  const Stream = types.register('Stream', []);
+  const Fn = types.register('Function');
+
+  Int.addProperty('operator+', [ Fn, Int, Int, Int ]);
+  Int.addProperty('operator-', [ Fn, Int, Int, Int ]);
+
+  Stream.addProperty('operator<<', [ Fn, Stream, Str, Stream ]);
+
+  Arr.addProperty('unary*', [ Fn, [ Arr, 0 ], 0 ]);
+  Arr.addProperty('join', [ Fn, [ Arr, 0 ], Str ]);
+
   return types;
 }
 

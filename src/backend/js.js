@@ -247,6 +247,46 @@ const transforms = {
     };
   },
 
+  MemberAccess: function(node) {
+    switch (node.op) {
+      case '.':
+        return {
+          type: 'MemberExpression',
+          object: toJS(node.object),
+          property: toJS(node.property),
+          computed: false
+        };
+
+      case '->':
+        // TODO: a whole lot of magic
+        return {
+          type: 'CallExpression',
+          callee: {
+            type: 'MemberExpression',
+            object: toJS(node.object),
+            property: { type: 'Identifier', name: 'map' },
+            computed: false
+          },
+          arguments: [
+            {
+              type: 'ArrowFunctionExpression',
+              params: [ { type: 'Identifier', name: 'x' } ],
+              body: {
+                type: 'MemberExpression',
+                object: { type: 'Identifier', name: 'x' },
+                property: toJS(node.property),
+                computed: false
+              },
+              expression: true
+            }
+          ]
+        };
+
+      default:
+        throw new Error(`Unknown member operator: ${node.op}`);
+    }
+  },
+
   BinaryExpression: function(node) {
     switch (node.op) {
       case '<<':

@@ -3,6 +3,7 @@
 class UnknownType {
   constructor() {
     this.actual = null;
+    this.props = new Map();
   }
 
   resolved() {
@@ -27,6 +28,19 @@ class UnknownType {
     return false;
   }
 
+  getProperty(name) {
+    if (this.props.has(name)) {
+      return this.props.get(name);
+    }
+    const prop = new UnknownType();
+    this.props.set(name, prop);
+    return prop;
+  }
+
+  setActual(actual) {
+    this.actual = actual;
+  }
+
   merge(other) {
     other = other.resolved();
     const self = this.resolved();
@@ -35,10 +49,10 @@ class UnknownType {
     }
 
     if (self instanceof UnknownType) {
-      self.actual = other;
+      self.setActual(other);
       return other;
     } else if (other instanceof UnknownType) {
-      other.actual = self;
+      other.setActual(self);
       return self;
     }
     return self.merge(other);
