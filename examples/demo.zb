@@ -1,6 +1,6 @@
-extern process;
+#include <node>
 
-public main(argv: String[]) {
+main(argv: String[]) {
   # The other primitive types
   c: Char = 'c'; n: Int = 42; f: Float = 0.2;
 

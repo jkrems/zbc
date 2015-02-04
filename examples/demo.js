@@ -3,7 +3,7 @@
  * @param argv {Array.<String>}
  * @returns {Int}
  */
-export function main(argv) {
+function main(argv) {
   const c = 'c';
   const n = 42;
   const f = 0.2;
