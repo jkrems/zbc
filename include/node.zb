@@ -1,1 +1,6 @@
-extern process;
+interface Process {
+  stdout: Stream;
+  pid: Int;
+}
+
+extern process: Process;

@@ -326,14 +326,50 @@ const externDeclaration = tracked(function externDeclaration(state, types) {
   // Extern considered already read
   state.read(Tokens.EXTERN);
   const id = rawIdentifier(state, types);
+
+  if (state.tryRead(Tokens.COLON)) {
+    id.setType(typeHint(state, types));
+  }
   types.registerId(id.name, id.type);
+
   state.read(Tokens.EOL);
   return new ZB.ExternDeclaration(id).setType(id.type);
 });
 
+const propertyDeclaration = tracked(function propertyDeclaration(state, types) {
+  const id = rawIdentifier(state, types);
+  if (state.tryRead(Tokens.COLON)) {
+    id.setType(typeHint(state, types));
+  }
+  state.read(Tokens.EOL);
+
+  return id;
+});
+
+const interfaceDeclaration = tracked(function interfaceDeclaration(state, types) {
+  state.read(Tokens.INTERFACE);
+  const id = rawIdentifier(state, types);
+  const typeSpec = types.register(id.name, []);
+
+  const body = [];
+  state.read(Tokens.LBRACE);
+
+  while (state.next && state.next.type !== Tokens.RBRACE) {
+    const prop = propertyDeclaration(state, types);
+    typeSpec.addProperty(prop.name, prop.type.type);
+    body.push(prop);
+  }
+  state.read(Tokens.RBRACE);
+  return new ZB.InterfaceDeclaration(id, body);
+});
+
 const declaration = tracked(function declaration(state, parentScope) {
-  if (state.next.type === Tokens.EXTERN) {
-    return externDeclaration(state, parentScope);
+  switch (state.next.type) {
+    case Tokens.EXTERN:
+      return externDeclaration(state, parentScope);
+
+    case Tokens.INTERFACE:
+      return interfaceDeclaration(state, parentScope);
   }
   const loc = state.track();
 

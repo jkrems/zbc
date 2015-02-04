@@ -366,6 +366,10 @@ const transforms = {
       type: 'Literal',
       value: node.value
     };
+  },
+
+  InterfaceDeclaration: function(node) {
+    return { type: 'EmptyStatement', leadingComments: [] };
   }
 };
 

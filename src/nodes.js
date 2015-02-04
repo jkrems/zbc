@@ -16,6 +16,7 @@ const NODE_SPEC = {
   FCallExpression: [ 'callee', 'args' ],
   Literal: [ 'value' ],
   Interpolation: [ 'elements' ],
+  InterfaceDeclaration: [ 'id', 'body' ],
   Identifier: [ 'name' ]
 };
 

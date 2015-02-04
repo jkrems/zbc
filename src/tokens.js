@@ -9,6 +9,7 @@ const TokenTypes = [
   'LESS', 'MORE', // < / >
   'LPAREN', 'RPAREN', 'LBRACE', 'RBRACE', 'LSQUARE', 'RSQUARE',
   'SEP', 'COLON',
+  'INTERFACE',
   'RETURN'
 ];
 

@@ -5,7 +5,7 @@
  */
 function main(argv) {
   const c = 'c';
-  const n = 42;
+  const n = 42 + process.pid;
   const f = 0.2;
   const stdout = process.stdout;
   const name = 'Quinn';

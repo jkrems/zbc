@@ -36,7 +36,7 @@ describe('js', function() {
 
 main(argv: String[]) {
   # The other primitive types
-  c: Char = 'c'; n: Int = 42; f: Float = 0.2;
+  c: Char = 'c'; n: Int = 42 + process.pid; f: Float = 0.2;
 
   stdout: Stream = process.stdout;
 
@@ -54,7 +54,7 @@ main(argv: String[]) {
       fs.writeFileSync(this.inFile, source);
       fs.writeFileSync(this.outFile, jsSource);
 
-      // console.log('\n--- in:\n%s\n--- out:\n%s', source, jsSource);
+      console.log('\n--- in:\n%s\n--- out:\n%s', source, jsSource);
     });
 
     it('runs', function(done) {
