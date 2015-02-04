@@ -1,17 +1,10 @@
 'use strict';
-const assert = require('assertive');
-
-const zb = require('../..');
+const typed = require('./typed');
+const int = typed.int,
+      fn = typed.fn;
 
 describe('infer/assign', function() {
   describe('assign int', function() {
-    it('transfers type info', function() {
-      const ast = zb.infer(`f() {
-  i = 81;
-  i;
-}`);
-      const f = ast.body[0];
-      assert.equal('Function<Int>', f.type.toString());
-    });
+    it('transfers type info', typed`${fn([int])}f() { i = 81; i; }`);
   });
 });
