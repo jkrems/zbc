@@ -288,62 +288,21 @@ const transforms = {
   },
 
   BinaryExpression: function(node) {
-    switch (node.op) {
-      case '<<':
-        // TODO: check for overloading...
-        // Assuming stream here
-        return {
-          type: 'CallExpression',
-          callee: {
-            type: 'MemberExpression',
-            object: toJS(node.left),
-            property: { type: 'Identifier', name: 'write' },
-            computed: false
-          },
-          arguments: [ toJS(node.right) ]
-        };
+    const lType = node.left.type.resolved();
+    const opPropName = `operator${node.op}`;
+    const opProp = lType.type && lType.type.getProperty(opPropName);
+    const jsMacro = opProp && opProp.jsMacro;
 
-      case '.':
-        return {
-          type: 'MemberExpression',
-          object: toJS(node.left),
-          property: toJS(node.right),
-          computed: false
-        };
-
-      case '->':
-        // TODO: a whole lot of magic
-        return {
-          type: 'CallExpression',
-          callee: {
-            type: 'MemberExpression',
-            object: toJS(node.left),
-            property: { type: 'Identifier', name: 'map' },
-            computed: false
-          },
-          arguments: [
-            {
-              type: 'ArrowFunctionExpression',
-              params: [ { type: 'Identifier', name: 'x' } ],
-              body: {
-                type: 'MemberExpression',
-                object: { type: 'Identifier', name: 'x' },
-                property: toJS(node.right),
-                computed: false
-              },
-              expression: true
-            }
-          ]
-        };
-
-      default:
-        return {
-          type: 'BinaryExpression',
-          operator: node.op,
-          left: toJS(node.left),
-          right: toJS(node.right)
-        };
+    if (jsMacro) {
+      return jsMacro(node, toJS);
     }
+
+    return {
+      type: 'BinaryExpression',
+      operator: node.op,
+      left: toJS(node.left),
+      right: toJS(node.right)
+    };
   },
 
   FCallExpression: function(node) {
@@ -383,5 +342,28 @@ function toJS(ast) {
   return transform(ast);
 }
 
-module.exports = toJS;
-module.exports.default = toJS;
+function registerMacros(types) {
+  const Stream = types.get('Stream');
+  const streamPush = Stream.getProperty('operator<<');
+  streamPush.jsMacro = function(node, toJS) {
+    return {
+      type: 'CallExpression',
+      callee: {
+        type: 'MemberExpression',
+        object: toJS(node.left),
+        property: { type: 'Identifier', name: 'write' },
+        computed: false
+      },
+      arguments: [ toJS(node.right) ]
+    };
+  }
+}
+
+function generateJS(ast) {
+  registerMacros(ast.types);
+
+  return toJS(ast);
+}
+
+module.exports = generateJS;
+module.exports.default = generateJS;

@@ -24,6 +24,10 @@ class BaseType {
     return this;
   }
 
+  getProperty(name) {
+    return this.props.get(name);
+  }
+
   createInstance(args) {
     args = args || [];
     if (this.params && args.length !== this.params.length) {
