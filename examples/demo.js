@@ -1,7 +1,8 @@
 /* global process */
+/* global argv */
 /*
- * @param argv {Array.<String>}
- * @returns {Int}
+ * @param argv {?}
+ * @returns {?}
  */
 function main(argv) {
   const c = 'c';

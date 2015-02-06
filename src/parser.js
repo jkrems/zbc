@@ -356,7 +356,7 @@ const interfaceDeclaration = tracked(function interfaceDeclaration(state, types)
 
   while (state.next && state.next.type !== Tokens.RBRACE) {
     const prop = propertyDeclaration(state, types);
-    typeSpec.addProperty(prop.name, prop.type.type);
+    typeSpec.addProperty(prop.name, prop.type);
     body.push(prop);
   }
   state.read(Tokens.RBRACE);

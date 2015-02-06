@@ -1,7 +1,8 @@
 /* global process */
+/* global argv */
 /*
- * @param argv {Array.<String>}
- * @returns {Int}
+ * @param argv {?}
+ * @returns {?}
  */
 function main(argv) {
   process.stdout.write('Hello World\n');

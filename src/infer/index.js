@@ -23,19 +23,19 @@ function makeTypeVisitor(nodeType, visit) {
 }
 
 const bubbleAssign = makeTypeVisitor(
-  'Assignment', function(node) {
+  'Assignment', function bubbleAssign(node) {
     const idType = node.type.merge(node.value.type);
     // TODO: store idType in scope..?
     node.target.type.merge(node.type);
   });
 
 const bubbleReturn = makeTypeVisitor(
-  'Return', function(node) {
+  'Return', function bubbleReturn(node) {
     node.type.merge(node.value.type);
   });
 
 const mergeReturnTypes = makeTypeVisitor(
-  'FunctionDeclaration', function(node) {
+  'FunctionDeclaration', function mergeReturnTypes(node) {
     const retType = node.type.args[node.type.args.length - 1];
     walkTree(node, [ // TODO: prevent descend into lambdas
       makeTypeVisitor('Return', function(returnNode) {
@@ -46,7 +46,7 @@ const mergeReturnTypes = makeTypeVisitor(
 
 function inferVisitors(types) {
   const mainSignature = makeTypeVisitor(
-    'FunctionDeclaration', function(node) {
+    'FunctionDeclaration', function mainSignature(node) {
       if (node.id.name !== 'main') { return; }
       // main(argv: Array<String>): Int
       const str = types.get('String').createInstance();
@@ -57,7 +57,7 @@ function inferVisitors(types) {
     });
 
   const binary = makeTypeVisitor(
-    'BinaryExpression', function(node) {
+    'BinaryExpression', function binary(node) {
       const objType = node.left.type.resolved();
       const propName = `operator${node.op}`;
       const prop = objType.getProperty(propName);
@@ -86,7 +86,7 @@ function inferVisitors(types) {
   }
 
   const memberAccess = makeTypeVisitor(
-    'MemberAccess', function(node) {
+    'MemberAccess', function memberAccess(node) {
       let objType;
       if (node.op === '->') {
         objType = derefType(node.object);
@@ -98,8 +98,7 @@ function inferVisitors(types) {
 
       let resultType;
       if (node.op === '->') {
-        resultType = node.object.type.resolved()
-          .type.createInstance([ propType ]);
+        resultType = node.object.type.createInstance([ propType ]);
       } else {
         resultType = propType;
       }
@@ -107,7 +106,7 @@ function inferVisitors(types) {
     });
 
   const fcall = makeTypeVisitor(
-    'FCallExpression', function(node) {
+    'FCallExpression', function fcall(node) {
       // TODO: handle `this`/method
       // TODO: build generic function and merge
       // TODO: check arguments

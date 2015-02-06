@@ -1,43 +1,5 @@
 'use strict';
 
-class BaseType {
-  constructor(name, params, id) {
-    this.name = name;
-    this.params = params || [];
-    this.id = id || Symbol(name);
-  }
-
-  toString() {
-    if (this.params.length) {
-      return `${this.name}<${this.params.join(', ')}>`;
-    }
-    return this.name;
-  }
-
-  createInstance(args) {
-    args = args || [];
-    if (this.params && args.length !== this.params.length) {
-      throw new Error(
-        `${this.toString()} expects ${this.params.length}, used with ${args.length} argument(s)`);
-    }
-    return new TypeInstance(this, args);
-  }
-}
-
-class TypeInstance {
-  constructor(type, args) {
-    this.type = type;
-    this.args = args;
-  }
-
-  toString() {
-    if (this.args.length) {
-      return `${this.name}<${this.args.join(', ')}>`;
-    }
-    return this.name;
-  }
-}
-
 function registerBuiltIns(types) {
   const Int = types.register('Int', []);
   const Str = types.register('String', [])
@@ -50,13 +12,15 @@ function registerBuiltIns(types) {
   const Stream = types.register('Stream', []);
   const Fn = types.register('Function');
 
-  Int.addProperty('operator+', [ Fn, Int, Int, Int ]);
-  Int.addProperty('operator-', [ Fn, Int, Int, Int ]);
+  Int.addProperty('operator+', Fn.createInstance([ Int, Int, Int ]));
+  Int.addProperty('operator-', Fn.createInstance([ Int, Int, Int ]));
 
-  Stream.addProperty('operator<<', [ Fn, Stream, Str, Stream ]);
+  Stream.addProperty('operator<<', Fn.createInstance([ Stream, Str, Stream ]));
 
-  Arr.addProperty('unary*', [ Fn, [ Arr, 0 ], 0 ]);
-  Arr.addProperty('join', [ Fn, [ Arr, 0 ], Str ]);
+  const t0 = types.createUnknown();
+  Arr.addProperty('unary*', Fn.createInstance([ Arr.createInstance([t0]), t0 ]));
+  const t1 = types.createUnknown();
+  Arr.addProperty('join', Fn.createInstance([ Arr.createInstance([t1]), Str ]));
 
   return types;
 }

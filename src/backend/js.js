@@ -288,9 +288,9 @@ const transforms = {
   },
 
   BinaryExpression: function(node) {
-    const lType = node.left.type.resolved();
+    const lType = node.left.type;
     const opPropName = `operator${node.op}`;
-    const opProp = lType.type && lType.type.getProperty(opPropName);
+    const opProp = lType.getProperty(opPropName);
     const jsMacro = opProp && opProp.jsMacro;
 
     if (jsMacro) {

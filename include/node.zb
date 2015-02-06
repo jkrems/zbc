@@ -4,3 +4,4 @@ interface Process {
 }
 
 extern process: Process;
+extern argv: String[];

@@ -29,12 +29,23 @@ class UnknownType {
   }
 
   getProperty(name) {
+    if (this.actual !== null) {
+      return this.actual.getProperty(name);
+    }
+
     if (this.props.has(name)) {
       return this.props.get(name);
     }
     const prop = new UnknownType();
     this.props.set(name, prop);
     return prop;
+  }
+
+  createInstance(args) {
+    if (this.actual !== null) {
+      return this.actual.createInstance(args);
+    }
+    throw new Error(`Can't create instance of unknown type ${this}`);
   }
 
   setActual(actual) {
