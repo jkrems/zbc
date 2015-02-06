@@ -38,9 +38,11 @@ class ParseState {
     return token;
   }
 
-  tryRead(type) {
-    if (this.next.type === type) {
-      return this.read(type);
+  tryRead() {
+    const types = [].slice.apply(arguments);
+    const idx = types.indexOf(this.next.type);
+    if (idx !== -1) {
+      return this.read(types[idx]);
     } else {
       return null;
     }
@@ -293,9 +295,13 @@ const typeHint = tracked(function typeHint(state, types) {
   } else if (state.tryRead(Tokens.LSQUARE)) {
     state.read(Tokens.RSQUARE);
     return types.get('Array').createInstance(
-      [ types.get(name).createInstance() ]);
+      [ types.get(name) ]);
   }
-  return types.get(name).createInstance(args);
+  if (args.length) {
+    return types.get(name).createInstance(args);
+  } else {
+    return types.get(name);
+  }
 });
 
 const parameter = tracked(function parameter(state, types) {
@@ -316,7 +322,7 @@ function parameterList(state, types) {
   const params = [];
   do {
     params.push(parameter(state, types));
-  } while (state.next.type === Tokens.SEP);
+  } while (state.tryRead(Tokens.SEP));
   state.read(Tokens.RPAREN);
 
   return params;
@@ -338,18 +344,72 @@ const externDeclaration = tracked(function externDeclaration(state, types) {
 
 const propertyDeclaration = tracked(function propertyDeclaration(state, types) {
   const id = rawIdentifier(state, types);
+
+  let isFunction = false, params;
+
+  if (id.name === 'operator') {
+    const op = state.tryRead(Tokens.BINARY, Tokens.UNARY_OR_BINARY);
+    if (op) {
+      id.name += op.text;
+      isFunction = true;
+    }
+  } else if (id.name === 'unary') {
+    const op = state.tryRead(Tokens.UNARY, Tokens.UNARY_OR_BINARY);
+    if (op) {
+      id.name += op.text;
+      isFunction = true;
+    }
+  }
+
+  if (state.next.type === Tokens.LPAREN) {
+    isFunction = true;
+    params = parameterList(state, types);
+  } else if (isFunction) {
+    throw new Error(`Expected parameter list for property ${id.name}`);
+  }
+
+  let returnType;
   if (state.tryRead(Tokens.COLON)) {
-    id.setType(typeHint(state, types));
+    returnType = typeHint(state, types);
+  } else {
+    returnType = types.createUnknown();
   }
   state.read(Tokens.EOL);
 
-  return id;
+  if (isFunction) {
+    const paramTypes = [
+      types.get('%self')
+    ].concat(
+      params.map(function(p) { return p.type; })
+    );
+    const ftype = types.get('Function')
+      .createInstance(paramTypes.concat([ returnType ]));
+
+    id.setType(ftype);
+    return id;
+  } else {
+    id.setType(returnType);
+    return id;
+  }
 });
 
-const interfaceDeclaration = tracked(function interfaceDeclaration(state, types) {
+const interfaceDeclaration = tracked(function interfaceDeclaration(state, outer) {
   state.read(Tokens.INTERFACE);
-  const id = rawIdentifier(state, types);
-  const typeSpec = types.register(id.name, []);
+  const id = rawIdentifier(state, outer);
+  const types = outer.createScope();
+  let typeParams = [];
+  if (state.tryRead(Tokens.LESS)) {
+    // read type params
+    do {
+      const typeParamName = rawIdentifier(state, types).name;
+      const typeParam = types.createUnknown();
+      types.set(typeParamName, typeParam);
+      typeParams.push(typeParam);
+    } while (state.tryRead(Tokens.SEP));
+    state.read(Tokens.MORE);
+  }
+  const typeSpec = outer.register(id.name, typeParams);
+  types.set('%self', typeSpec);
 
   const body = [];
   state.read(Tokens.LBRACE);

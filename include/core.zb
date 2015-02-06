@@ -1,0 +1,23 @@
+interface Void {}
+
+interface Int {
+  operator+(b: Int): Int;
+  operator-(b: Int): Int;
+}
+
+interface Char {}
+interface Float {}
+
+interface String {
+  length: Int;
+}
+
+interface Stream {
+  operator<<(str: String): Stream;
+}
+
+interface Array<ItemType> {
+  join(sep: String): String;
+
+  unary*(): ItemType;
+}

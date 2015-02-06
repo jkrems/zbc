@@ -9,7 +9,10 @@ const zb = require('../..');
 
 describe('js', function() {
   it('len.zb', function() {
-    const source = `main(argv) {
+    const source = `
+#include <core>
+
+main(argv) {
   argv.length - 2;
 }
 `;
@@ -20,9 +23,20 @@ describe('js', function() {
   });
 
   it('hello.zb', function() {
-    const source = fs.readFileSync('examples/hello.zb', 'utf8');
+    this.inFile = 'examples/hello.zb';
+    this.outFile = 'examples/hello.js';
+
+    const source = `#include <node>
+
+main(argv: String[]) {
+  process.stdout << "Hello World\n";
+  0;
+}
+`;
     const jsSource = zb.zb2js(source);
-    fs.writeFileSync('examples/hello.js', jsSource);
+
+    fs.writeFileSync(this.inFile, source);
+    fs.writeFileSync(this.outFile, jsSource);
 
     // console.log('\n--- in:\n%s\n--- out:\n%s', source, jsSource);
   });

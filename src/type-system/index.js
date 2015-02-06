@@ -33,19 +33,7 @@ class TypeSystem {
     }
   }
 
-  register(name, params) {
-    let args;
-    if (params) {
-      const known = new Map();
-      args = params.map(function(param) {
-        if (known.has(param)) {
-          return known.get(param);
-        }
-        const arg = new UnknownType();
-        known.set(param, arg);
-        return arg;
-      });
-    }
+  register(name, args) {
     return this.set(name, new BaseType(name, args));
   }
 

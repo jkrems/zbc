@@ -5,6 +5,9 @@ const int = typed.int,
 
 describe('infer/assign', function() {
   describe('assign int', function() {
-    it('transfers type info', typed`${fn([int])}f() { i = 81; i; }`);
+    it('transfers type info', typed`
+#include <core>
+${fn([int])}f() { i = 81; i; }
+`);
   });
 });

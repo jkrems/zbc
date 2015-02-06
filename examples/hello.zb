@@ -1,6 +1,7 @@
 #include <node>
 
 main(argv: String[]) {
-  process.stdout << "Hello World\n";
+  process.stdout << "Hello World
+";
   0;
 }

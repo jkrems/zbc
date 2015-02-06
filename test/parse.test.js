@@ -10,10 +10,10 @@ describe('parse', function() {
   describe('Hello World', function() {
     before(function() {
       this.tokens = scan(`
-        main(stdout) {
-          stdout << "Hi!\\n";
-        }
-      `);
+#include <core>
+main(stdout) {
+  stdout << "Hi!\\n";
+}`);
       this.ast = parse(this.tokens);
       this.body = this.ast.body;
     });

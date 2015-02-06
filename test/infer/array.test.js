@@ -9,11 +9,15 @@ const int = typed.int,
 
 describe('infer/array', function() {
   it('length', typed`
+#include <core>
+
 ${fn([ arr(str), int ])}f(argv: String[]) {
   ${arr(str)}${int}argv.length - ${int}2;
 }`);
 
   it('is not thrown off by different kinds of arrays', typed`
+#include <core>
+
 ${fn([ arr(str), void_ ])}f(${arr(str)}argv: String[]) {}
 ${fn([ arr(int), void_ ])}g(${arr(int)}ints: Int[]) {}
 `)
