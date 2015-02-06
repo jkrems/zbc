@@ -86,12 +86,16 @@ class BaseType {
     return clone;
   }
 
+  isBasically(other) {
+    return (other instanceof BaseType) && (this.id === other.id);
+  }
+
   merge(other) {
     other = other.resolved();
     if (other instanceof UnknownType) {
       return other.merge(this);
     }
-    if (this.id !== other.id) {
+    if (!this.isBasically(other)) {
       throw new Error(`Incompatible: ${this} vs. ${other}`);
     }
     if (this.args.length !== other.args.length) {

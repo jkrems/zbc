@@ -399,15 +399,12 @@ const declaration = tracked(function declaration(state, parentScope) {
     return param.type;
   });
 
-  const nonVoid = returnType.type !== types.get('Void');
+  const nonVoid = !returnType.isBasically(types.get('Void'));
   const statements = block(state, types);
   const last = statements[statements.length - 1];
+  const lastType = (last && nonVoid) ? last.type : types.get('Void');
 
-  if (nonVoid && !last) {
-    throw new Error('Non-void function with empty body');
-  }
-
-  const body = (nonVoid && last.getNodeType() !== 'Return') ?
+  const body = (nonVoid && last && last.getNodeType() !== 'Return') ?
     // Auto-return last statement for non-void functions
     statements.slice(0, statements.length - 1).concat(
       new ZB.Return(last)
@@ -415,9 +412,7 @@ const declaration = tracked(function declaration(state, parentScope) {
         .setLocation(last.getLocation())
     ) : statements;
 
-  if (nonVoid) {
-    returnType.merge(last.type);
-  }
+  returnType.merge(lastType);
 
   const ftype = types.get('Function')
     .createInstance(paramTypes.concat([ returnType ]));

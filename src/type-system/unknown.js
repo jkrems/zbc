@@ -41,6 +41,13 @@ class UnknownType {
     return prop;
   }
 
+  isBasically(other) {
+    if (this.actual !== null) {
+      return this.actual.isBasically(other.resolved());
+    }
+    return false;
+  }
+
   createInstance(args) {
     if (this.actual !== null) {
       return this.actual.createInstance(args);

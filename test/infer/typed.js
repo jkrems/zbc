@@ -55,14 +55,19 @@ function typed(splitSource) {
 module.exports = typed;
 
 function int(types) {
-  return types.get('Int').createInstance();
+  return types.get('Int');
 }
 typed.int = int;
 
 function str(types) {
-  return types.get('String').createInstance();
+  return types.get('String');
 }
 typed.str = str;
+
+function void_(types) {
+  return types.get('Void');
+}
+typed.void_ = void_;
 
 function arr(el) {
   return function arrOf(types) {
