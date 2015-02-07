@@ -1,0 +1,60 @@
+# [PackageDev] target_format: plist, ext: tmLanguage
+---
+name: Zoidberg
+scopeName: source.zoidberg
+fileTypes: [ 'zb' ]
+uuid: cd4ca271-0767-44ea-b884-d2d36705ba51
+
+patterns:
+- comment: Extern declaration
+  name: meta.declaration.extern
+  begin: '(extern)'
+  beginCaptures:
+    '1': { name: storage.modifier.extern }
+  end: ';'
+  patterns:
+  - comment: Actual
+    name: meta.declaration.extern.body
+    match: '\G\s+(\w+)\s*(?::\s*([\w<>\[\]]+)\s*)?'
+    captures:
+      '1': { name: variable.other.declaration }
+      '2': { name: storage.type }
+- comment: Interface declaration
+  name: meta.declaration.interface
+  begin: '(interface)\s+(\w+)\s*\{'
+  beginCaptures:
+    '1': { name: storage.type.interface }
+    '2': { name: entity.name.type }
+  end: '\}'
+  patterns:
+  - comment: Interface field
+    name: meta.declaration.interface.field
+    match: '(\w+)\s*:\s*([\w<>\[\]]+);'
+    captures:
+      '1': { name: variable.other.declaration }
+      '2': { name: storage.type }
+- comment: Function declaration
+  name: meta.declaration.function
+  begin: '(\w+)\s*\('
+  end: '\)'
+  captures:
+    '1': { name: entity.name.function }
+  patterns:
+  - comment: Parameter
+    name: meta.declaration.function.parameter
+    match: '(\w+)\s*:\s*([\w<>\[\]]+)'
+    captures:
+      '1': { name: variable.parameter }
+      '2': { name: storage.type }
+- comment: Function body
+  name: meta.declaration.function.body
+  begin: '\{'
+  end: '\}'
+  patterns:
+  - comment: Value binding
+    name: meta.declaration.value
+    match: '(\w+)\s*:\s*([\w<>\[\]]+\s*)(?:=\s*[^;]+\s*);'
+    captures:
+      '1': { name: variable.other.declaration }
+      '2': { name: storage.type }
+...
