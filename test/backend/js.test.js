@@ -10,16 +10,14 @@ const zb = require('../..');
 describe('js', function() {
   it('len.zb', function() {
     const source = `
-#include <core>
-
 main(argv) {
   argv.length - 2;
 }
 `;
-    const jsSource = zb.zb2js(source);
-    fs.writeFileSync('examples/len.js', jsSource);
+    const result = zb.zb2js(source);
+    fs.writeFileSync('examples/len.js', result.jsSource);
 
-    // console.log('\n--- in:\n%s\n--- out:\n%s', source, jsSource);
+    // console.log('\n--- in:\n%s\n--- out:\n%s', source, result.jsSource);
   });
 
   it('hello.zb', function() {
@@ -33,12 +31,12 @@ main(argv: String[]) {
   0;
 }
 `;
-    const jsSource = zb.zb2js(source);
+    const result = zb.zb2js(source);
 
     fs.writeFileSync(this.inFile, source);
-    fs.writeFileSync(this.outFile, jsSource);
+    fs.writeFileSync(this.outFile, result.jsSource);
 
-    // console.log('\n--- in:\n%s\n--- out:\n%s', source, jsSource);
+    // console.log('\n--- in:\n%s\n--- out:\n%s', source, result.jsSource);
   });
 
   describe('demo.zb', function() {
@@ -63,12 +61,12 @@ main(argv: String[]) {
   0;
 }
 `;
-      const jsSource = zb.zb2js(source);
+      const result = zb.zb2js(source);
 
       fs.writeFileSync(this.inFile, source);
-      fs.writeFileSync(this.outFile, jsSource);
+      fs.writeFileSync(this.outFile, result.jsSource);
 
-      console.log('\n--- in:\n%s\n--- out:\n%s', source, jsSource);
+      console.log('\n--- in:\n%s\n--- out:\n%s', source, result.jsSource);
     });
 
     it('runs', function(done) {

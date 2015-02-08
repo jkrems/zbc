@@ -61,6 +61,14 @@ class BaseType {
     return this.props.get(name);
   }
 
+  getPropertyNames() {
+    const props = [];
+    for (let prop of this.props) {
+      props.push(prop);
+    }
+    return props;
+  }
+
   createClone() {
     return cloneType(this);
   }

@@ -37,13 +37,23 @@ class TypeSystem {
     return this.set(name, new BaseType(name, args));
   }
 
+  getKnownTypes() {
+    const known = [];
+    for (let key of this._scope.keys()) {
+      known.push(key);
+    }
+    return known.concat(
+      this._parent !== null ? this._parent.getKnownTypes() : []
+    );
+  }
+
   has(id) {
     return this._scope.has(id) ||
       (this._parent !== null && this._parent.has(id));
   }
 
   set(id, type) {
-    if (this.has(id)) {
+    if (this._scope.has(id)) {
       throw new Error(`Redefinition of ${id}`);
     }
     this._scope.set(id, type);
