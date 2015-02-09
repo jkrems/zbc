@@ -417,17 +417,20 @@ const declaration = tracked(function declaration(state) {
     return param.type;
   });
 
-  const statements = block(state);
-  const last = statements[statements.length - 1];
-  const nonVoid = returnType === null || returnType.name !== 'Void';
-  const lastType = (last && nonVoid) ? last.type : null;
+  const statements = state.tryRead(Tokens.EOL) ? null : block(state);
+  let body = null;
+  if (statements !== null) {
+    const last = statements[statements.length - 1];
+    const nonVoid = returnType === null || returnType.name !== 'Void';
+    const lastType = (last && nonVoid) ? last.type : null;
 
-  const body = (nonVoid && last && last.getNodeType() !== 'Return') ?
-    // Auto-return last statement for non-void functions
-    statements.slice(0, statements.length - 1).concat(
-      new ZB.Return(last)
-        .setLocation(last.getLocation())
-    ) : statements;
+    body = (nonVoid && last && last.getNodeType() !== 'Return') ?
+      // Auto-return last statement for non-void functions
+      statements.slice(0, statements.length - 1).concat(
+        new ZB.Return(last)
+          .setLocation(last.getLocation())
+      ) : statements;
+  }
 
   return new ZB.FunctionDeclaration(name, params, body, visibility, returnType)
     .setLocation(loc.get());

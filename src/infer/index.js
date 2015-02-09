@@ -45,7 +45,7 @@ const bubbleReturn = makeTypeVisitor(
     node.type.merge(node.value.type);
   });
 
-function inferVisitors(types) {
+function inferVisitors(types, loadModule) {
   const typesStack = [];
   function pushTypeScope() {
     typesStack.push(types);
@@ -60,10 +60,7 @@ function inferVisitors(types) {
       // TODO: evaluate in new scope based on root type scope
       // then set the types of the extractions (and of this)
       const rootScope = types.getRootScope();
-      const moduleScope = rootScope.createScope();
-      moduleScope.registerId('createServer',
-        moduleScope.get('Function')
-          .createInstance([ moduleScope.get('Int') ]));
+      const moduleScope = loadModule(node.path, rootScope).types;
 
       const ns = moduleScope.toNamespace(node.path);
       node.type.merge(ns);
@@ -79,6 +76,8 @@ function inferVisitors(types) {
 
   const mergeReturnTypes = makeTypeVisitor(
     'FunctionDeclaration', function mergeReturnTypes(node) {
+      if (node.body === null) return;
+
       const retType = node.getReturnType();
       if (node.body.length === 0) {
         retType.merge(types.get('Void'));
@@ -258,8 +257,8 @@ function inferVisitors(types) {
   ];
 }
 
-function infer(ast, types) {
-  const visitors = inferVisitors(types);
+function infer(ast, types, loadModule) {
+  const visitors = inferVisitors(types, loadModule);
   return { ast: walkTree(ast, visitors), types: types };
 }
 module.exports = infer;

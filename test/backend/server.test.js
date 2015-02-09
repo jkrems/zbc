@@ -8,7 +8,7 @@ const assert = require('assertive');
 
 const zb = require('../..');
 
-describe.only('node server', function() {
+describe('node server', function() {
   it('just listen & exit', function() {
     this.inFile = path.resolve('examples/server-listen.zb');
     this.outFile = path.resolve('examples/server-listen.js');
@@ -18,6 +18,7 @@ using http.{createServer};
 
 main(argv) {
   server = createServer();
+  server.listen(0);
   return 0;
 }
 `;

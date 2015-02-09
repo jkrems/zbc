@@ -3,5 +3,6 @@ using http.{createServer};
 
 main(argv) {
   server = createServer();
+  server.listen(0);
   return 0;
 }

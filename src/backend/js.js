@@ -281,8 +281,7 @@ const transforms = {
     return {
       type: 'VariableDeclaration',
       kind: 'const',
-      declarations: declarations,
-      leadingComments: [ { value: ` Import: ${importPath} ` } ]
+      declarations: declarations
     };
   },
 
