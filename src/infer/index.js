@@ -211,11 +211,13 @@ function inferVisitors(types, loadModule) {
     'MemberAccess', function memberAccess(node) {
       const objType = node.op === '->' ?
         derefType(node.object) : node.object.type.resolved();
-      const propName = node.property;
+      const selector = node.property;
+      const propName = selector.name;
       const propType = objType.getProperty(propName);
       if (propType === undefined) {
         throw new Error(`${objType} has no property ${propName}`);
       }
+      selector.type.merge(propType);
 
       let resultType;
       if (node.op === '->') {
@@ -228,14 +230,27 @@ function inferVisitors(types, loadModule) {
 
   const fcall = makeTypeVisitor(
     'FCallExpression', function fcall(node) {
-      // TODO: handle `this`/method
-      // TODO: build generic function and merge
-      // TODO: check arguments
+      let callee = node.callee;
+      let args = node.args;
+      let calleeType;
+      if (callee.getNodeType() === 'Selector' && args.length > 0) {
+        const obj = args[0];
+        const prop = obj.type.getProperty(callee.name);
+        if (prop) {
+          calleeType = prop.resolved();
+        }
+      } else {
+        calleeType = callee.type.resolved();
+      }
 
-      const fnType = node.callee.type.resolved();
+      const callType = types.get('Function')
+        .createInstance(args.map(function(arg) {
+          return arg.type;
+        }).concat([ node.type ]));
 
-      const typeArgs = fnType.args;
-      const retType = typeArgs.slice(-1)[0];
+      callType.merge(calleeType);
+
+      const retType = callType.args.slice(-1)[0];
       node.type.merge(retType);
     });
 

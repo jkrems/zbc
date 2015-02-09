@@ -285,13 +285,17 @@ const transforms = {
     };
   },
 
+  Selector: function(node) {
+    return { type: 'Identifier', name: node.name };
+  },
+
   MemberAccess: function(node) {
     switch (node.op) {
       case '.':
         return {
           type: 'MemberExpression',
           object: toJS(node.object),
-          property: { type: 'Identifier', name: node.property },
+          property: toJS(node.property),
           computed: false
         };
 
@@ -312,7 +316,7 @@ const transforms = {
               body: {
                 type: 'MemberExpression',
                 object: { type: 'Identifier', name: 'x' },
-                property: { type: 'Identifier', name: node.property },
+                property: toJS(node.property),
                 computed: false
               },
               expression: true
@@ -344,6 +348,23 @@ const transforms = {
   },
 
   FCallExpression: function(node) {
+    if (node.callee.getNodeType() === 'Selector' && node.args.length > 0) {
+      const name = node.callee.name;
+      const obj = node.args[0];
+      const prop = obj.type.getProperty(name);
+      if (prop) {
+        const args = node.args.slice(1);
+        return {
+          type: 'CallExpression',
+          callee: {
+            type: 'MemberExpression',
+            object: toJS(obj),
+            property: { type: 'Identifier', name: name }
+          },
+          arguments: args.map(toJS)
+        };
+      }
+    }
     return {
       type: 'CallExpression',
       callee: toJS(node.callee),

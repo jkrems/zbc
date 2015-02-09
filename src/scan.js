@@ -20,6 +20,7 @@ const scanOperators = Lexer.makeOperatorScanner({
   '<<': Tokens.BINARY,
   ';': Tokens.EOL,
   ':': Tokens.COLON,
+  '::': Tokens.NAMESPACE,
   '(': Tokens.LPAREN,
   ')': Tokens.RPAREN,
   '{': Tokens.LBRACE,

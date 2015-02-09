@@ -4,12 +4,53 @@ const assert = require('assertive');
 const zb = require('../..');
 
 describe('parse/Function', function() {
+  describe('member call', function() {
+    before(function() {
+      this.ast = zb.parse('f() { return a.b(); }');
+      this.f = this.ast.body[0];
+    });
+
+    it('transforms to unified call', function() {
+      const ret = this.f.body[0];
+      assert.equal('Return', ret.getNodeType());
+      const fcall = ret.value;
+      assert.equal(1, fcall.args.length);
+    });
+  });
+
+  describe('static call', function() {
+    before(function() {
+      this.ast = zb.parse('f() { return b(); }');
+      this.f = this.ast.body[0];
+    });
+
+    it('transforms to unified call', function() {
+      const ret = this.f.body[0];
+      assert.equal('Return', ret.getNodeType());
+      const fcall = ret.value;
+      assert.equal(0, fcall.args.length);
+    });
+  });
+
+  describe('namespace call', function() {
+    before(function() {
+      this.ast = zb.parse('f() { return a::b(); }');
+      this.f = this.ast.body[0];
+    });
+
+    it('transforms to unified call', function() {
+      const ret = this.f.body[0];
+      assert.equal('Return', ret.getNodeType());
+      const fcall = ret.value;
+      assert.equal(0, fcall.args.length);
+    });
+  });
+
   describe('return value, explicit', function() {
     before(function() {
       this.ast = zb.parse(`f(): Int { 42; }`);
       this.body = this.ast.body;
       this.f = this.body[0];
-      this.types = this.ast.types;
     });
 
     it('has one declaration', function() {
@@ -45,7 +86,6 @@ describe('parse/Function', function() {
     before(function() {
       this.ast = zb.parse(`f() { 42; }`);
       this.f = this.ast.body[0];
-      this.types = this.ast.types;
     });
 
     it('has no return type hint', function() {

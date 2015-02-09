@@ -21,6 +21,7 @@ const NODE_SPEC = {
   Interpolation: [ 'elements' ],
   Using: [ 'path', 'extractions' ],
   InterfaceDeclaration: [ 'name', 'params', 'body' ],
+  Selector: [ 'name' ],
   Identifier: [ 'name' ]
 };
 
