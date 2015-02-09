@@ -17,6 +17,7 @@ interface Stream {
 }
 
 interface Array<ItemType> {
+  length: Int;
   join(sep: String): String;
 
   unary*(): ItemType;

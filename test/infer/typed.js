@@ -24,25 +24,29 @@ function getNodesAt(ast, idx) {
 
 function typed(splitSource) {
   const source = splitSource.join('');
-  const expected = [].slice.call(arguments, 1);
+  const verifiers = [].slice.call(arguments, 1);
 
-  let pos = 0, tokenIdx = 0;
+  let pos = 0, verifierIdx = 0;
+  const expected = [];
   for (let part of splitSource) {
     pos += part.length;
-    if (tokenIdx < expected.length) {
-      expected[tokenIdx].pos = pos;
+    if (verifierIdx < verifiers.length) {
+      expected.push({ pos: pos, verifier: verifiers[verifierIdx] });
     }
-    ++tokenIdx;
+    ++verifierIdx;
   }
 
   return function() {
-    const ast = zb.infer(source);
-    const types = ast.types;
+    const result = zb.infer(source);
+    const types = result.types;
 
     expected.forEach(function(expect) {
-      const typeInstance = expect(types);
+      const typeInstance = expect.verifier(types);
 
-      const nodes = getNodesAt(ast, expect.pos);
+      const nodes = getNodesAt(result.ast, expect.pos);
+      if (nodes.length === 0) {
+        throw new Error(`No nodes at index ${expect.pos}`);
+      }
       const nodeTypes = nodes.map(function(n) { return n.type; });
       assert.truthy(
         `${typeInstance} !== ${nodeTypes.join(' | ')}`,

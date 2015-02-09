@@ -126,7 +126,7 @@ const transforms = {
     let body = node.body.map(toJS);
     const hasMain = node.body.some(function(decl) {
       return decl.getNodeType() === 'FunctionDeclaration' &&
-             decl.id.name === 'main';
+             decl.name === 'main';
     });
 
     let comments = [];
@@ -170,7 +170,7 @@ const transforms = {
           type: 'ReturnStatement',
           argument: toJS(expr.value)
         };
-      } else if (expr.getNodeType() === 'Assignment') {
+      } else if (expr.getNodeType() === 'ValueDeclaration') {
         return toJS(expr);
       } else {
         return {
@@ -184,7 +184,7 @@ const transforms = {
       type: 'FunctionDeclaration',
       id: {
         type: 'Identifier',
-        name: node.id.name
+        name: node.name
       },
       params: node.params.map(function(param) {
         return {
@@ -216,14 +216,14 @@ const transforms = {
     return outNode;
   },
 
-  Assignment: function(node) {
+  ValueDeclaration: function(node) {
     return {
       type: 'VariableDeclaration',
       kind: 'const',
       declarations: [
         {
           type: 'VariableDeclarator',
-          id: toJS(node.target),
+          id: { type: 'Identifier', name: node.name },
           init: toJS(node.value)
         }
       ]
@@ -253,7 +253,7 @@ const transforms = {
         return {
           type: 'MemberExpression',
           object: toJS(node.object),
-          property: toJS(node.property),
+          property: { type: 'Identifier', name: node.property },
           computed: false
         };
 
@@ -274,7 +274,7 @@ const transforms = {
               body: {
                 type: 'MemberExpression',
                 object: { type: 'Identifier', name: 'x' },
-                property: toJS(node.property),
+                property: { type: 'Identifier', name: node.property },
                 computed: false
               },
               expression: true
@@ -333,6 +333,10 @@ const transforms = {
 };
 
 function toJS(ast) {
+  if (typeof ast.getNodeType !== 'function') {
+    console.log('ast', ast);
+    throw new Error('Not a valid AST node');
+  }
   const transform = transforms[ast.getNodeType()];
 
   if (transform === undefined) {
@@ -359,10 +363,10 @@ function registerMacros(types) {
   }
 }
 
-function generateJS(ast) {
-  registerMacros(ast.types);
-
-  return toJS(ast);
+function generateJS(result) {
+  registerMacros(result.types);
+  result.jsAst = toJS(result.ast);
+  return result;
 }
 
 module.exports = generateJS;

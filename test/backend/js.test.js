@@ -1,6 +1,7 @@
 /* global describe, it */
 'use strict';
 const fs = require('fs');
+const path = require('path');
 const cp = require('child_process');
 
 const assert = require('assertive');
@@ -10,16 +11,14 @@ const zb = require('../..');
 describe('js', function() {
   it('len.zb', function() {
     const source = `
-#include <core>
-
 main(argv) {
   argv.length - 2;
 }
 `;
-    const jsSource = zb.zb2js(source);
-    fs.writeFileSync('examples/len.js', jsSource);
+    const result = zb.zb2js(source);
+    fs.writeFileSync('examples/len.js', result.jsSource);
 
-    // console.log('\n--- in:\n%s\n--- out:\n%s', source, jsSource);
+    // console.log('\n--- in:\n%s\n--- out:\n%s', source, result.jsSource);
   });
 
   it('hello.zb', function() {
@@ -33,18 +32,18 @@ main(argv: String[]) {
   0;
 }
 `;
-    const jsSource = zb.zb2js(source);
+    const result = zb.zb2js(source);
 
     fs.writeFileSync(this.inFile, source);
-    fs.writeFileSync(this.outFile, jsSource);
+    fs.writeFileSync(this.outFile, result.jsSource);
 
-    // console.log('\n--- in:\n%s\n--- out:\n%s', source, jsSource);
+    // console.log('\n--- in:\n%s\n--- out:\n%s', source, result.jsSource);
   });
 
   describe('demo.zb', function() {
     before('compiled', function() {
       this.inFile = 'examples/demo.zb';
-      this.outFile = 'examples/demo.js';
+      this.outFile = path.resolve('examples/demo.js');
 
       const source = `#include <node>
 
@@ -63,19 +62,22 @@ main(argv: String[]) {
   0;
 }
 `;
-      const jsSource = zb.zb2js(source);
+      const result = zb.zb2js(source);
 
       fs.writeFileSync(this.inFile, source);
-      fs.writeFileSync(this.outFile, jsSource);
+      fs.writeFileSync(this.outFile, result.jsSource);
 
-      console.log('\n--- in:\n%s\n--- out:\n%s', source, jsSource);
+      console.log('\n--- in:\n%s\n--- out:\n%s', source, result.jsSource);
     });
 
     it('runs', function(done) {
       this.timeout(400);
       this.slow(300);
 
-      const child = cp.fork(this.outFile, [], {
+      const nodeExecLen = process.execPath.length;
+
+      const outFile = this.outFile;
+      const child = cp.fork(outFile, [], {
         execArgv: [ '--harmony', '--harmony_arrow_functions' ],
         silent: true
       });
@@ -90,7 +92,7 @@ main(argv: String[]) {
         assert.equal(0, exitCode);
         assert.equal(`Static\tEsc\\apes
 Quinn says "Hello"
-51 :: 54
+${nodeExecLen} :: ${outFile.length}
 Hello Quinn!
 `, stdout);
         done();

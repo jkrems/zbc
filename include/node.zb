@@ -1,5 +1,3 @@
-#include <core>
-
 interface Process {
   stdout: Stream;
   pid: Int;

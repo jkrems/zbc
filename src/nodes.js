@@ -7,16 +7,19 @@ const UnknownType = require('./type-system/unknown');
 const NODE_SPEC = {
   Module: [ 'body', 'types' ],
   ExternDeclaration: [ 'id' ],
-  FunctionDeclaration: [ 'id', 'params', 'body', 'visibility' ],
+  TypeHint: [ 'name', 'args' ],
+  FunctionDeclaration: [ 'name', 'params', 'body', 'visibility', 'returnHint' ],
+  ValueDeclaration: [ 'name', 'typeHint', 'value' ],
+  PropertyDeclaration: [ 'name', 'params', 'typeHint' ],
   Assignment: [ 'target', 'value' ],
   Return: [ 'value' ],
   MemberAccess: [ 'object', 'op', 'property' ],
   BinaryExpression: [ 'left', 'op', 'right' ],
   UnaryExpression: [ 'op', 'right' ],
   FCallExpression: [ 'callee', 'args' ],
-  Literal: [ 'value' ],
+  Literal: [ 'value', 'typeName' ],
   Interpolation: [ 'elements' ],
-  InterfaceDeclaration: [ 'id', 'body' ],
+  InterfaceDeclaration: [ 'name', 'params', 'body' ],
   Identifier: [ 'name' ]
 };
 
@@ -42,6 +45,14 @@ class Node {
 
   getLocation() {
     return this._location;
+  }
+
+  getSourceString() {
+    const idx = this._location.index;
+    const source = this._location.source;
+    const before = source.slice(idx - 5, idx);
+    const after = source.slice(idx + 1, idx + 5);
+    return `${before}\`${source[idx]}\`${after}`;
   }
 
   setType(type) {

@@ -3,7 +3,9 @@ const path = require('path');
 const fs = require('fs');
 
 const escodegen = require('escodegen');
+const debug = require('debug')('zoidberg:zoidberg');
 
+const TypeSystem = require('./type-system');
 const _preprocess = require('./prezbc');
 const _lex = require('./scan')
 const _parse = require('./parser');
@@ -33,15 +35,26 @@ function parse(raw) {
 exports.parse = parse;
 
 function infer(raw) {
-  return _infer(parse(raw));
+  const types = new TypeSystem();
+  types.register('Function');
+
+  debug('<core>');
+  const coreFilename = path.join(__dirname, '..', 'include', 'core.zb');
+  const coreSource = fs.readFileSync(coreFilename, 'utf8');
+  _infer(parse(coreSource), types);
+  debug('</core>');
+
+  const moduleScope = types.createScope();
+  return _infer(parse(raw), moduleScope);
 }
 exports.infer = infer;
 
 function zb2js(raw) {
-  const jsAst = _toJS(infer(raw));
-  return escodegen.generate(jsAst, {
+  const out = _toJS(infer(raw));
+  out.jsSource = escodegen.generate(out.jsAst, {
     indent: '  ',
     comment: true
   });
+  return out;
 }
 exports.zb2js = zb2js;
