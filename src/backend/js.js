@@ -123,7 +123,7 @@ function toJSType(type) {
 
 const transforms = {
   Module: function(node) {
-    let body = node.body.map(toJS);
+    let body = node.imports.map(toJS).concat(node.body.map(toJS));
     const hasMain = node.body.some(function(decl) {
       return decl.getNodeType() === 'FunctionDeclaration' &&
              decl.name === 'main';
@@ -247,6 +247,44 @@ const transforms = {
     };
   },
 
+  Using: function(node) {
+    const importPath = node.path;
+    // TODO: don't pollute or at least smart no-conflict identifier
+    const naturalIdent = node.path.replace(/.*\/[^/]+$/, '');
+
+    const declarations = [
+      {
+        type: 'VariableDeclarator',
+        id: { type: 'Identifier', name: naturalIdent },
+        init: {
+          type: 'CallExpression',
+          callee: { type: 'Identifier', name: 'require' },
+          arguments: [
+            { type: 'Literal', value: importPath }
+          ]
+        }
+      }
+    ];
+
+    for (let extraction of node.extractions) {
+      declarations.push({
+        type: 'VariableDeclarator',
+        id: { type: 'Identifier', name: extraction.name },
+        init: {
+          type: 'MemberExpression',
+          object: { type: 'Identifier', name: naturalIdent },
+          property: { type: 'Identifier', name: extraction.name }
+        }
+      });
+    }
+
+    return {
+      type: 'VariableDeclaration',
+      kind: 'const',
+      declarations: declarations
+    };
+  },
+
   MemberAccess: function(node) {
     switch (node.op) {
       case '.':
@@ -334,7 +372,7 @@ const transforms = {
 
 function toJS(ast) {
   if (typeof ast.getNodeType !== 'function') {
-    console.log('ast', ast);
+    console.error('ast', ast);
     throw new Error('Not a valid AST node');
   }
   const transform = transforms[ast.getNodeType()];

@@ -1,0 +1,5 @@
+interface HttpServer {
+  listen(port: Int): Void;
+}
+
+createServer(): HttpServer;

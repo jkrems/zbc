@@ -44,8 +44,21 @@ function infer(raw) {
   _infer(parse(coreSource), types);
   debug('</core>');
 
+  function parseAndInferModule(source) {
+    const moduleScope = types.createScope();
+    return _infer(parse(source), moduleScope, loadModule);
+  }
+
+  function loadModule(name) {
+    const filename = path.join(
+      __dirname, '..', 'include', `${name}.zb`);
+
+    const source = fs.readFileSync(filename, 'utf8');
+    return parseAndInferModule(source);
+  }
+
   const moduleScope = types.createScope();
-  return _infer(parse(raw), moduleScope);
+  return _infer(parse(raw), moduleScope, loadModule);
 }
 exports.infer = infer;
 

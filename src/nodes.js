@@ -5,7 +5,7 @@ const _ = require('lodash');
 const UnknownType = require('./type-system/unknown');
 
 const NODE_SPEC = {
-  Module: [ 'body', 'types' ],
+  Module: [ 'imports', 'body' ],
   ExternDeclaration: [ 'id' ],
   TypeHint: [ 'name', 'args' ],
   FunctionDeclaration: [ 'name', 'params', 'body', 'visibility', 'returnHint' ],
@@ -19,6 +19,7 @@ const NODE_SPEC = {
   FCallExpression: [ 'callee', 'args' ],
   Literal: [ 'value', 'typeName' ],
   Interpolation: [ 'elements' ],
+  Using: [ 'path', 'extractions' ],
   InterfaceDeclaration: [ 'name', 'params', 'body' ],
   Identifier: [ 'name' ]
 };
