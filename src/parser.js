@@ -188,31 +188,59 @@ const valueExpr = tracked(function valueExpr(state) {
   throw new Error(`Unexpected ${peek.toString()} at ${state.next.position}`);
 });
 
+const selector = tracked(function selector(state) {
+  const name = state.read(Tokens.IDENTIFIER).text;
+  return new ZB.Selector(name);
+});
+
+function fcallArgs(state) {
+  if (state.next.type === Tokens.RPAREN) return [];
+  const args = [];
+  do {
+    args.push(expression(state));
+  } while (state.tryRead(Tokens.SEP));
+  return args;
+}
+
 const fcallExpr = tracked(function fcallExpr(state) {
-  let lOperand = valueExpr(state);
+  // a.b().z()
+  // -> fcall(.z, fcall(.b, [ a ]))
+  // a()
+  // -> fcall(.a)
+  // a().b
+  // -> acc(fcall(.a), .b)
+  let obj = valueExpr(state);
+
   while (true) {
-    let op, rOperand;
+    let op, sel, args;
     switch (state.next.type) {
       case Tokens.MEMBER_ACCESS:
         op = state.read(Tokens.MEMBER_ACCESS);
-        rOperand = state.read(Tokens.IDENTIFIER).text;
-        lOperand = new ZB.MemberAccess(lOperand, op.text, rOperand);
+        sel = selector(state);
+        if (state.tryRead(Tokens.LPAREN)) {
+          args = fcallArgs(state);
+          state.read(Tokens.RPAREN);
+          obj = new ZB.FCallExpression(sel, [ obj ].concat(args));
+        } else {
+          obj = new ZB.MemberAccess(obj, op.text, sel);
+        }
+        break;
+
+      case Tokens.NAMESPACE:
+        op = state.read(Tokens.NAMESPACE);
+        sel = selector(state);
+        obj = new ZB.MemberAccess(obj, op.text, sel);
         break;
 
       case Tokens.LPAREN:
         state.read(Tokens.LPAREN);
-        rOperand = [];
-        if (!state.tryRead(Tokens.RPAREN)) {
-          do {
-            rOperand.push(expression(state));
-          } while (state.tryRead(Tokens.SEP));
-          state.read(Tokens.RPAREN);
-        }
-        lOperand = new ZB.FCallExpression(lOperand, rOperand);
+        args = fcallArgs(state);
+        state.read(Tokens.RPAREN);
+        obj = new ZB.FCallExpression(obj, args);
         break;
 
       default:
-        return lOperand;
+        return obj;
     }
   }
 });

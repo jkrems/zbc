@@ -27,6 +27,6 @@ main(argv) {
     fs.writeFileSync(this.inFile, source);
     fs.writeFileSync(this.outFile, result.jsSource);
 
-    console.log('\n--- in:\n%s\n--- out:\n%s', source, result.jsSource);
+    // console.log('\n--- in:\n%s\n--- out:\n%s', source, result.jsSource);
   });
 });
