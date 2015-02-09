@@ -185,7 +185,7 @@ const valueExpr = tracked(function valueExpr(state) {
     state.read(Tokens.RPAREN);
     return inner;
   }
-  throw new Error(`Unexpected ${peek.toString()}`);
+  throw new Error(`Unexpected ${peek.toString()} at ${state.next.position}`);
 });
 
 const fcallExpr = tracked(function fcallExpr(state) {
@@ -201,9 +201,14 @@ const fcallExpr = tracked(function fcallExpr(state) {
 
       case Tokens.LPAREN:
         state.read(Tokens.LPAREN);
-        var arg = expression(state);
-        state.read(Tokens.RPAREN);
-        lOperand = new ZB.FCallExpression(lOperand, [ arg ]);
+        rOperand = [];
+        if (!state.tryRead(Tokens.RPAREN)) {
+          do {
+            rOperand.push(expression(state));
+          } while (state.tryRead(Tokens.SEP));
+          state.read(Tokens.RPAREN);
+        }
+        lOperand = new ZB.FCallExpression(lOperand, rOperand);
         break;
 
       default:
@@ -247,6 +252,7 @@ function block(state) {
     const loc = state.track();
     if (state.tryRead(Tokens.RETURN)) {
       const returnValue = expression(state);
+      state.read(Tokens.EOL);
       content.push(
         new ZB.Return(returnValue).setLocation(loc.get()));
     } else {
@@ -435,9 +441,44 @@ function declarations(state) {
   return decls;
 }
 
+function usingDeclaration(state) {
+  state.read(Tokens.USING);
+  const namespacePath = [
+    // First element has to be an identifier (for now)
+    state.read(Tokens.IDENTIFIER).text
+  ];
+  const extractions = [];
+
+  while (state.tryRead(Tokens.MEMBER_ACCESS)) { // technically allows ->
+    if (state.tryRead(Tokens.LBRACE)) {
+      do {
+        const extraction = valueDeclaration(state);
+        extractions.push(extraction);
+      } while (state.tryRead(Tokens.SEP));
+      state.read(Tokens.RBRACE);
+      break;
+    }
+    const element = state.read(Tokens.IDENTIFIER).text;
+    namespacePath.push(element);
+  }
+
+  state.read(Tokens.EOL);
+
+  return new ZB.Using(namespacePath.join('/'), extractions);
+}
+
+function usingDeclarations(state) {
+  const imports = [];
+  while (state.next.type === Tokens.USING) {
+    imports.push(usingDeclaration(state));
+  }
+  return imports;
+}
+
 const rootRule = tracked(function rootRule(state) {
+  const imports = usingDeclarations(state);
   const decls = declarations(state);
-  return new ZB.Module(decls);
+  return new ZB.Module(imports, decls);
 });
 
 function parse(tokens) {

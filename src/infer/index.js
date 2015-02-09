@@ -55,6 +55,28 @@ function inferVisitors(types) {
     types = typesStack.pop();
   }
 
+  const imports = makeTypeVisitor(
+    'Using', function imports(node) {
+      // TODO: evaluate in new scope based on root type scope
+      // then set the types of the extractions (and of this)
+      const rootScope = types.getRootScope();
+      const moduleScope = rootScope.createScope();
+      moduleScope.registerId('createServer',
+        moduleScope.get('Function')
+          .createInstance([ moduleScope.get('Int') ]));
+
+      const ns = moduleScope.toNamespace(node.path);
+      node.type.merge(ns);
+
+      for (let extraction of node.extractions) {
+        const propType = ns.getProperty(extraction.name);
+        if (propType === undefined) {
+          throw new Error(`${node.path} does not export ${extraction.name}`);
+        }
+        extraction.type.merge(propType);
+      }
+    });
+
   const mergeReturnTypes = makeTypeVisitor(
     'FunctionDeclaration', function mergeReturnTypes(node) {
       const retType = node.getReturnType();
@@ -70,7 +92,6 @@ function inferVisitors(types) {
 
   function resolveHint(hint) {
     if (hint === null) { return types.createUnknown(); }
-    // console.log('resolveHint:', hint.name, types.getKnownTypes());
     const args = hint.args.map(resolveHint);
     return types.get(hint.name).createInstance(args);
   }
@@ -78,7 +99,6 @@ function inferVisitors(types) {
   const literals = makeTypeVisitor(
     'Literal', function literals(node) {
       node.type.merge(types.get(node.typeName));
-      console.log('Literal(%s)', node.type, node.value);
     });
 
   const registerInterfaces = makeTypeVisitor(
@@ -221,6 +241,7 @@ function inferVisitors(types) {
     });
 
   return [
+    imports,
     literals,
     registerInterfaces,
     addProperties,

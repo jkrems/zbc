@@ -1,0 +1,7 @@
+
+using http.{createServer};
+
+main(argv) {
+  server = createServer();
+  return 0;
+}

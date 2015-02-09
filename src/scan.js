@@ -117,6 +117,7 @@ const KEYWORDS = Object.create(null, {
   'public': { value: Tokens.VISIBILITY },
   'extern': { value: Tokens.EXTERN },
   'return': { value: Tokens.RETURN },
+  'using': { value: Tokens.USING },
   'interface': { value: Tokens.INTERFACE }
 });
 function scanIdentifier(lexer) {

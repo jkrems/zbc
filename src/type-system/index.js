@@ -10,6 +10,18 @@ class TypeSystem {
     this._parent = parent || null;
   }
 
+  getRootScope() {
+    return this._parent === null ? this : this._parent.getRootScope();
+  }
+
+  toNamespace(name) {
+    const ns = new BaseType(name, []);
+    for (let id of this._ids.keys()) {
+      ns.addProperty(id, this.resolveId(id));
+    }
+    return ns;
+  }
+
   createScope() {
     return new TypeSystem(this);
   }
