@@ -1,6 +1,7 @@
 /* global describe, it */
 'use strict';
 const fs = require('fs');
+const path = require('path');
 const cp = require('child_process');
 
 const assert = require('assertive');
@@ -42,7 +43,7 @@ main(argv: String[]) {
   describe('demo.zb', function() {
     before('compiled', function() {
       this.inFile = 'examples/demo.zb';
-      this.outFile = 'examples/demo.js';
+      this.outFile = path.resolve('examples/demo.js');
 
       const source = `#include <node>
 
@@ -73,7 +74,10 @@ main(argv: String[]) {
       this.timeout(400);
       this.slow(300);
 
-      const child = cp.fork(this.outFile, [], {
+      const nodeExecLen = process.execPath.length;
+
+      const outFile = this.outFile;
+      const child = cp.fork(outFile, [], {
         execArgv: [ '--harmony', '--harmony_arrow_functions' ],
         silent: true
       });
@@ -88,7 +92,7 @@ main(argv: String[]) {
         assert.equal(0, exitCode);
         assert.equal(`Static\tEsc\\apes
 Quinn says "Hello"
-51 :: 54
+${nodeExecLen} :: ${outFile.length}
 Hello Quinn!
 `, stdout);
         done();
