@@ -111,9 +111,9 @@ function callMain() {
 function toJSType(type) {
   if (!type) { throw new Error('Missing type information'); }
   type = type.resolved();
-  if (!type.type) { return '?'; }
+  if (!type.name) { return '?'; }
 
-  const base = type.type.name;
+  const base = type.name;
   const args = type.args;
   if (args.length > 0) {
     return base + '.<' + args.map(toJSType) + '>';
@@ -121,9 +121,31 @@ function toJSType(type) {
   return base;
 }
 
+function bluebirdImport() {
+  return {
+    type: 'VariableDeclaration',
+    kind: 'const',
+    declarations: [
+      {
+        type: 'VariableDeclarator',
+        id: { type: 'Identifier', name: 'Promise' },
+        init: {
+          type: 'CallExpression',
+          callee: { type: 'Identifier', name: 'require' },
+          arguments: [ { type: 'Literal', value: 'bluebird' } ]
+        }
+      }
+    ]
+  };
+}
+
 const transforms = {
   Module: function(node) {
-    let body = node.imports.map(toJS).concat(node.body.map(toJS));
+    let body = [
+      bluebirdImport()
+    ].concat(
+      node.imports.map(toJS), node.body.map(toJS)
+    );
     const hasMain = node.body.some(function(decl) {
       return decl.getNodeType() === 'FunctionDeclaration' &&
              decl.name === 'main';
@@ -181,7 +203,7 @@ const transforms = {
     });
 
     const decl = {
-      type: 'FunctionDeclaration',
+      type: 'FunctionExpression',
       id: {
         type: 'Identifier',
         name: node.name
@@ -193,13 +215,31 @@ const transforms = {
         };
       }),
       expression: false,
+      generator: true,
       body: {
         type: 'BlockStatement',
         body: statements
       }
     };
-    const outNode = (node.visibility === 'public') ?
-      { type: 'ExportDeclaration', declaration: decl } : decl;
+    const outNode = {
+      type: 'VariableDeclaration',
+      kind: 'const',
+      declarations: [
+        {
+          type: 'VariableDeclarator',
+          id: { type: 'Identifier', name: node.name },
+          init: {
+            type: 'CallExpression',
+            callee: {
+              type: 'MemberExpression',
+              object: { type: 'Identifier', name: 'Promise' },
+              property: { type: 'Identifier', name: 'coroutine' }
+            },
+            arguments: [ decl ]
+          }
+        }
+      ]
+    };
 
     const retType = node.getReturnType();
 
@@ -290,6 +330,7 @@ const transforms = {
   },
 
   MemberAccess: function(node) {
+    let mapFn = 'map';
     switch (node.op) {
       case '.':
         return {
@@ -301,12 +342,15 @@ const transforms = {
 
       case '->':
         // TODO: a whole lot of magic
+        if (node.object.type.resolved().name === 'Promise') {
+          mapFn = 'then';
+        }
         return {
           type: 'CallExpression',
           callee: {
             type: 'MemberExpression',
             object: toJS(node.object),
-            property: { type: 'Identifier', name: 'map' },
+            property: { type: 'Identifier', name: mapFn },
             computed: false
           },
           arguments: [
@@ -329,11 +373,28 @@ const transforms = {
     }
   },
 
+  UnaryExpression: function(node) {
+    const lType = node.argument.type;
+    const opPropName = `unary${node.op}`;
+    const opProp = lType.getProperty(opPropName);
+    const jsMacro = opProp && opProp.resolved().jsMacro;
+
+    if (jsMacro) {
+      return jsMacro(node, toJS);
+    }
+
+    return {
+      type: 'UnaryExpression',
+      operator: node.op,
+      argument: toJS(node.argument)
+    };
+  },
+
   BinaryExpression: function(node) {
     const lType = node.left.type;
     const opPropName = `operator${node.op}`;
     const opProp = lType.getProperty(opPropName);
-    const jsMacro = opProp && opProp.jsMacro;
+    const jsMacro = opProp && opProp.resolved().jsMacro;
 
     if (jsMacro) {
       return jsMacro(node, toJS);
@@ -348,11 +409,14 @@ const transforms = {
   },
 
   FCallExpression: function(node) {
+
     if (node.callee.getNodeType() === 'Selector' && node.args.length > 0) {
       const name = node.callee.name;
       const obj = node.args[0];
       const prop = obj.type.getProperty(name);
       if (prop) {
+        const jsMacro = prop && prop.resolved().jsMacro;
+        if (jsMacro) { return jsMacro(node, toJS); }
         const args = node.args.slice(1);
         return {
           type: 'CallExpression',
@@ -365,6 +429,8 @@ const transforms = {
         };
       }
     }
+    const jsMacro = node.callee.type && node.callee.type.resolved().jsMacro;
+    if (jsMacro) { throw new Error('Not implemented'); }
     return {
       type: 'CallExpression',
       callee: toJS(node.callee),
@@ -405,25 +471,7 @@ function toJS(ast) {
   return transform(ast);
 }
 
-function registerMacros(types) {
-  const Stream = types.get('Stream');
-  const streamPush = Stream.getProperty('operator<<');
-  streamPush.jsMacro = function(node, toJS) {
-    return {
-      type: 'CallExpression',
-      callee: {
-        type: 'MemberExpression',
-        object: toJS(node.left),
-        property: { type: 'Identifier', name: 'write' },
-        computed: false
-      },
-      arguments: [ toJS(node.right) ]
-    };
-  }
-}
-
 function generateJS(result) {
-  registerMacros(result.types);
   result.jsAst = toJS(result.ast);
   return result;
 }

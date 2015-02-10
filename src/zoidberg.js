@@ -38,24 +38,34 @@ function infer(raw) {
   const types = new TypeSystem();
   types.register('Function');
 
-  debug('<core>');
-  const coreFilename = path.join(__dirname, '..', 'include', 'core.zb');
-  const coreSource = fs.readFileSync(coreFilename, 'utf8');
-  _infer(parse(coreSource), types);
-  debug('</core>');
-
-  function parseAndInferModule(source) {
-    const moduleScope = types.createScope();
+  function parseAndInferModule(source, moduleScope) {
     return _infer(parse(source), moduleScope, loadModule);
   }
 
-  function loadModule(name) {
-    const filename = path.join(
-      __dirname, '..', 'include', `${name}.zb`);
+  function _loadModule(name, moduleScope) {
+    const baseName = path.join(__dirname, '..', 'include', name);
+    const filename = `${baseName}.zb`;
+
+    let macros = function() {};
+    try {
+      macros = require(baseName);
+    } catch (err) {
+      if (err.code !== 'MODULE_NOT_FOUND') { throw err; }
+    }
 
     const source = fs.readFileSync(filename, 'utf8');
-    return parseAndInferModule(source);
+    const result = parseAndInferModule(source, moduleScope);
+    macros(result.types);
+    return result;
   }
+
+  function loadModule(name) {
+    return _loadModule(name, types.createScope());
+  }
+
+  debug('<core>');
+  _loadModule('core', types);
+  debug('</core>');
 
   const moduleScope = types.createScope();
   return _infer(parse(raw), moduleScope, loadModule);

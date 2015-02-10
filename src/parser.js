@@ -254,7 +254,7 @@ const unaryExpr = tracked(function unaryExpr(state) {
   const value = fcallExpr(state);
 
   if (op !== undefined) {
-    return new ZB.UnaryExpression(op, value);
+    return new ZB.UnaryExpression(op.text, value);
   } else {
     return value;
   }
@@ -437,6 +437,16 @@ const declaration = tracked(function declaration(state) {
   }
 
   const name = state.read(Tokens.IDENTIFIER).text;
+
+  if (state.next.type === Tokens.COLON || state.next.type === Tokens.EOL) {
+    // value declaration
+    const hint = state.tryRead(Tokens.COLON) ? typeHint(state) : null;
+    if (!state.tryRead(Tokens.EOL)) {
+      throw new Error('ValueDeclaration with initializer not supported yet');
+    }
+    return new ZB.ValueDeclaration(name, hint, null);
+  }
+
   const params = parameterList(state);
 
   const returnType = state.tryRead(Tokens.COLON) ? typeHint(state) : null;

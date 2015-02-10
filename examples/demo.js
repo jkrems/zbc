@@ -1,10 +1,11 @@
 /* global process */
 /* global argv */
+const Promise = require('bluebird');
 /*
- * @param argv {?}
- * @returns {?}
+ * @param argv {Array.<String>}
+ * @returns {Int}
  */
-function main(argv) {
+const main = Promise.coroutine(function* main(argv) {
   const c = 'c';
   const n = 42 + process.pid;
   const f = 0.2;
@@ -18,7 +19,7 @@ function main(argv) {
   stdout.write(`Hello ${ name }!
 `);
   return 0;
-}
+});
 if (require.main === module) {
   new Promise(resolve => {
     resolve(main(process.argv));

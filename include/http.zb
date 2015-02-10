@@ -1,5 +1,12 @@
-interface HttpServer {
-  listen(port: Int): Void;
+interface HttpRequest {
 }
 
-createServer(): HttpServer;
+interface HttpAddress {
+  port: Int;
+}
+
+interface HttpServer {
+  listen(port: Int): Promise<HttpAddress>;
+}
+
+createServer(handler: Function<HttpRequest, Stream, Void>): HttpServer;

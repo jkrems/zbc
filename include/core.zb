@@ -14,6 +14,11 @@ interface String {
 
 interface Stream {
   operator<<(str: String): Stream;
+  end(): Void;
+}
+
+interface Promise<T> {
+  unary*(): T;
 }
 
 interface Array<ItemType> {

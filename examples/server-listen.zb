@@ -1,8 +1,17 @@
 
 using http.{createServer};
+using process.{stdout};
+
+handleReq(req, res): Void {
+  res << "ok
+";
+  res.end();
+}
 
 main(argv) {
-  server = createServer();
-  server.listen(0);
+  server = createServer(handleReq);
+  port = *server.listen(0)->port;
+  stdout << "Listening on \{port}
+";
   return 0;
 }

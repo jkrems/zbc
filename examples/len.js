@@ -1,10 +1,11 @@
+const Promise = require('bluebird');
 /*
- * @param argv {?}
- * @returns {?}
+ * @param argv {Array.<String>}
+ * @returns {Int}
  */
-function main(argv) {
+const main = Promise.coroutine(function* main(argv) {
   return argv.length - 2;
-}
+});
 if (require.main === module) {
   new Promise(resolve => {
     resolve(main(process.argv));

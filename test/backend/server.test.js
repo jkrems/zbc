@@ -15,10 +15,17 @@ describe('node server', function() {
 
     const source = `
 using http.{createServer};
+using process.{stdout};
+
+handleReq(req, res): Void {
+  res << "ok\n";
+  res.end();
+}
 
 main(argv) {
-  server = createServer();
-  server.listen(0);
+  server = createServer(handleReq);
+  port = *server.listen(0)->port;
+  stdout << "Listening on \\{port}\n";
   return 0;
 }
 `;
@@ -27,6 +34,6 @@ main(argv) {
     fs.writeFileSync(this.inFile, source);
     fs.writeFileSync(this.outFile, result.jsSource);
 
-    // console.log('\n--- in:\n%s\n--- out:\n%s', source, result.jsSource);
+    console.log('\n--- in:\n%s\n--- out:\n%s', source, result.jsSource);
   });
 });
