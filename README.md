@@ -13,7 +13,7 @@ main(argv) {
   # Create server from req -> res function
   server = createServer(req => {
     statusCode: 200,
-    headers: new Map(
+    headers: Map(
       # Map<K, V> is constructed from Tuple<K, V> arguments
       ("Content-Type", "text/plain; charset=utf-8")
     ),
