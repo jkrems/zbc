@@ -13,13 +13,11 @@ describe('node server', function() {
     this.inFile = path.resolve('examples/server-listen.zb');
     this.outFile = path.resolve('examples/server-listen.js');
 
-    const source = `
+    const source = `using process.{stdout};
 using http.{createServer};
-using process.{stdout};
 
 handleReq(req, res): Void {
-  res << "ok\n";
-  res.end();
+  res << "ok\n"; res.end();
 }
 
 main(argv) {

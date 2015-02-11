@@ -1,11 +1,9 @@
-
-using http.{createServer};
 using process.{stdout};
+using http.{createServer};
 
 handleReq(req, res): Void {
   res << "ok
-";
-  res.end();
+"; res.end();
 }
 
 main(argv) {

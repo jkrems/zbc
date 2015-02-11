@@ -1,6 +1,6 @@
 const Promise = require('bluebird');
-const http = require('http'), createServer = http.createServer;
 const process = require('process'), stdout = process.stdout;
+const http = require('http'), createServer = http.createServer;
 /*
  * @param req {HttpRequest}
  * @param res {Stream}
