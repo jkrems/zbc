@@ -45,6 +45,11 @@ const bubbleReturn = makeTypeVisitor(
     node.type.merge(node.value.type);
   });
 
+const sequenceToSecond = makeTypeVisitor(
+  'Sequence', function sequenceToSecond(node) {
+    node.type.merge(node.second.type);
+  });
+
 function inferVisitors(types, loadModule) {
   const typesStack = [];
   function pushTypeScope() {
@@ -79,14 +84,7 @@ function inferVisitors(types, loadModule) {
       if (node.body === null) return;
 
       const retType = node.getReturnType();
-      if (node.body.length === 0) {
-        retType.merge(types.get('Void'));
-      }
-      walkTree(node, [ // TODO: prevent descend into lambdas
-        makeTypeVisitor('Return', function(returnNode) {
-          returnNode.type.merge(retType);
-        })
-      ]);
+      node.body.type.merge(retType);
     });
 
   function resolveHint(hint) {
@@ -98,6 +96,11 @@ function inferVisitors(types, loadModule) {
   const literals = makeTypeVisitor(
     'Literal', function literals(node) {
       node.type.merge(types.get(node.typeName));
+    });
+
+  const emptyVoid = makeTypeVisitor(
+    'Empty', function emptyVoid(node) {
+      node.type.merge(types.get('Void'));
     });
 
   const registerInterfaces = makeTypeVisitor(
@@ -257,6 +260,8 @@ function inferVisitors(types, loadModule) {
   return [
     imports,
     literals,
+    emptyVoid,
+    sequenceToSecond,
     registerInterfaces,
     addProperties,
     resolveIdentifiers,

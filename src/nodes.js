@@ -16,6 +16,8 @@ const NODE_SPEC = {
   MemberAccess: [ 'object', 'op', 'property' ],
   BinaryExpression: [ 'left', 'op', 'right' ],
   UnaryExpression: [ 'op', 'argument' ],
+  Sequence: [ 'first', 'second' ],
+  Empty: [],
   FCallExpression: [ 'callee', 'args' ],
   Literal: [ 'value', 'typeName' ],
   Interpolation: [ 'elements' ],
