@@ -11,7 +11,7 @@ describe('parse/Function', function() {
     });
 
     it('transforms to unified call', function() {
-      const ret = this.f.body[0];
+      const ret = this.f.body;
       assert.equal('Return', ret.getNodeType());
       const fcall = ret.value;
       assert.equal(1, fcall.args.length);
@@ -25,7 +25,7 @@ describe('parse/Function', function() {
     });
 
     it('transforms to unified call', function() {
-      const ret = this.f.body[0];
+      const ret = this.f.body;
       assert.equal('Return', ret.getNodeType());
       const fcall = ret.value;
       assert.equal(0, fcall.args.length);
@@ -39,7 +39,7 @@ describe('parse/Function', function() {
     });
 
     it('transforms to unified call', function() {
-      const ret = this.f.body[0];
+      const ret = this.f.body;
       assert.equal('Return', ret.getNodeType());
       const fcall = ret.value;
       assert.equal(0, fcall.args.length);
@@ -63,7 +63,7 @@ describe('parse/Function', function() {
     });
 
     it('generates a Return(Literal(42)) body', function() {
-      const fBody = this.f.body[0];
+      const fBody = this.f.body;
       assert.equal('Return', fBody.getNodeType());
       assert.equal('Literal', fBody.value.getNodeType());
       assert.equal(42, fBody.value.value);

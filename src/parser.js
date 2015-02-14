@@ -272,16 +272,16 @@ const expression = tracked(function expression(state) {
   return lOperand;
 });
 
-function block(state) {
+const block = tracked(function block(state) {
   state.read(Tokens.LBRACE);
 
-  const content = [];
+  const lines = [];
   while (state.next.type !== Tokens.RBRACE) {
     const loc = state.track();
     if (state.tryRead(Tokens.RETURN)) {
       const returnValue = expression(state);
       state.read(Tokens.EOL);
-      content.push(
+      lines.push(
         new ZB.Return(returnValue).setLocation(loc.get()));
     } else {
       state.try(
@@ -294,22 +294,27 @@ function block(state) {
           s.endTry(); // Yep, it's an assignment
           const value = expression(s);
           s.read(Tokens.EOL);
-          content.push(new ZB.ValueDeclaration(
+          lines.push(new ZB.ValueDeclaration(
             target.name, target.typeHint, value
           ).setLocation(loc.get()));
         },
         function(s) {
           const expr = expression(s);
           s.read(Tokens.EOL);
-          content.push(expr);
+          lines.push(expr);
         }
       );
     }
   }
 
   state.read(Tokens.RBRACE);
-  return content;
-}
+
+  if (lines.length === 0) { return new ZB.Empty(); }
+  return lines.reduceRight(function(second, first) {
+    return new ZB.Sequence(second, first)
+      .setLocation(first.getLocation().add(second.getLocation()));
+  });
+});
 
 const typeHint = tracked(function typeHint(state) {
   const loc = state.track();
@@ -458,16 +463,15 @@ const declaration = tracked(function declaration(state) {
   const statements = state.tryRead(Tokens.EOL) ? null : block(state);
   let body = null;
   if (statements !== null) {
-    const last = statements[statements.length - 1];
-    const nonVoid = returnType === null || returnType.name !== 'Void';
-    const lastType = (last && nonVoid) ? last.type : null;
+    const needsReturn =
+      (returnType === null || returnType.name !== 'Void')
+      && statements.getNodeType() !== 'Empty'
+      && statements.getNodeType() !== 'Return';
 
-    body = (nonVoid && last && last.getNodeType() !== 'Return') ?
-      // Auto-return last statement for non-void functions
-      statements.slice(0, statements.length - 1).concat(
-        new ZB.Return(last)
-          .setLocation(last.getLocation())
-      ) : statements;
+    body = needsReturn ?
+      // Auto-return result of body for non-void functions
+      new ZB.Return(statements).setLocation(statements.getLocation())
+      : statements;
   }
 
   return new ZB.FunctionDeclaration(name, params, body, visibility, returnType)
