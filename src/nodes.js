@@ -30,12 +30,13 @@ const NODE_SPEC = {
 class Node {
   constructor() {
     this._location = null;
-    this.type = new UnknownType();
-    this.childNodes = [];
+    this._type = new UnknownType();
+    this._childNodes = [];
+    this._scope = null;
   }
 
   getChildNodes() {
-    return this.childNodes;
+    return this._childNodes;
   }
 
   getNodeType() {
@@ -59,27 +60,43 @@ class Node {
     return `${before}\`${source[idx]}\`${after}`;
   }
 
-  setType(type) {
-    this.type = type;
+  setScope(scope) {
+    this._scope = scope;
     return this;
   }
 
-  getType() {
-    return this.type;
+  getScope() {
+    return this._scope;
   }
 
-  addChildIfNode(value) {
+  setType(type) {
+    this._type = type;
+    return this;
+  }
+
+  mergeType(type) {
+    return this.getType().merge(type);
+  }
+
+  getType() {
+    return this._type;
+  }
+
+  _addChildIfNode(value) {
     if (value instanceof Node) {
-      this.childNodes.push(value);
+      this._childNodes.push(value);
+      if (value.getScope() === null) {
+        value.setScope(this.getScope());
+      }
     }
   }
 
   setAttribute(field, value) {
     this[field] = value;
     if (Array.isArray(value)) {
-      value.forEach(this.addChildIfNode, this);
+      value.forEach(this._addChildIfNode, this);
     } else {
-      this.addChildIfNode(value);
+      this._addChildIfNode(value);
     }
   }
 }
@@ -101,7 +118,7 @@ _.each(NODE_SPEC, function(fields, name) {
 
 exports.FunctionDeclaration.prototype.getReturnType =
 function getReturnType() {
-  const type = this.type.resolved();
+  const type = this.getType().resolved();
   const lastArg = type.args[type.args.length - 1];
   return lastArg.resolved();
 };

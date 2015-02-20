@@ -35,19 +35,19 @@ function makeTypeVisitor(nodeType, leave, enter) {
 
 const bubbleAssign = makeTypeVisitor(
   'Assignment', function bubbleAssign(node) {
-    const idType = node.type.merge(node.value.type);
+    const idType = node.mergeType(node.value.getType());
     // TODO: store idType in scope..?
-    node.target.type.merge(node.type);
+    node.target.mergeType(node.getType());
   });
 
 const bubbleReturn = makeTypeVisitor(
   'Return', function bubbleReturn(node) {
-    node.type.merge(node.value.type);
+    node.mergeType(node.value.getType());
   });
 
 const sequenceToSecond = makeTypeVisitor(
   'Sequence', function sequenceToSecond(node) {
-    node.type.merge(node.second.type);
+    node.mergeType(node.second.getType());
   });
 
 function inferVisitors(types, loadModule) {
@@ -68,14 +68,14 @@ function inferVisitors(types, loadModule) {
       const moduleScope = loadModule(node.path, rootScope).types;
 
       const ns = moduleScope.toNamespace(node.path);
-      node.type.merge(ns);
+      node.mergeType(ns);
 
       for (let extraction of node.extractions) {
         const propType = ns.getProperty(extraction.name);
         if (propType === undefined) {
           throw new Error(`${node.path} does not export ${extraction.name}`);
         }
-        extraction.type.merge(propType);
+        extraction.mergeType(propType);
       }
     });
 
@@ -84,7 +84,7 @@ function inferVisitors(types, loadModule) {
       if (node.body === null) return;
 
       const retType = node.getReturnType();
-      node.body.type.merge(retType);
+      node.body.mergeType(retType);
     });
 
   function resolveHint(hint) {
@@ -95,12 +95,12 @@ function inferVisitors(types, loadModule) {
 
   const literals = makeTypeVisitor(
     'Literal', function literals(node) {
-      node.type.merge(types.get(node.typeName));
+      node.mergeType(types.get(node.typeName));
     });
 
   const emptyVoid = makeTypeVisitor(
     'Empty', function emptyVoid(node) {
-      node.type.merge(types.get('Void'));
+      node.mergeType(types.get('Void'));
     });
 
   const registerInterfaces = makeTypeVisitor(
@@ -125,29 +125,29 @@ function inferVisitors(types, loadModule) {
 
   const registerIdentifiers = makeTypeVisitor(
     'ValueDeclaration', function registerIdentifiers(node) {
-      types.registerId(node.name, node.type);
-      node.type.merge(resolveHint(node.typeHint));
+      types.registerId(node.name, node.getType());
+      node.mergeType(resolveHint(node.typeHint));
       if (node.value !== null) {
-        node.type.merge(node.value.type);
+        node.mergeType(node.value.getType());
       }
     });
 
   const resolveIdentifiers = makeTypeVisitor(
     'Identifier', function resolveIdentifiers(node) {
-      node.type.merge(types.resolveId(node.name));
+      node.mergeType(types.resolveId(node.name));
     });
 
   const functionTypes = makeTypeVisitor(
     'FunctionDeclaration', function functionTypes(node) {
-      types.registerId(node.name, node.type);
+      types.registerId(node.name, node.getType());
 
       const paramTypes = node.params.map(function(param) {
-        return param.type;
+        return param.getType();
       });
       const returnType = resolveHint(node.returnHint);
       const fnType = types.get('Function')
         .createInstance(paramTypes.concat([ returnType ]));
-      node.type.merge(fnType);
+      node.mergeType(fnType);
     });
 
   const mainSignature = makeTypeVisitor(
@@ -158,7 +158,7 @@ function inferVisitors(types, loadModule) {
       const int = types.get('Int').createInstance();
       const strArr = types.get('Array').createInstance([ str ]);
       const mainFn = types.get('Function').createInstance([ strArr, int ]);
-      node.type.merge(mainFn);
+      node.mergeType(mainFn);
     });
 
   const addProperties = makeTypeVisitor(
@@ -172,18 +172,18 @@ function inferVisitors(types, loadModule) {
         const paramTypes = [
           types.get('%self')
         ].concat(node.params.map(function(param) {
-          return param.type;
+          return param.getType();
         }));
         propType = types.get('Function')
           .createInstance(paramTypes.concat(returnType));
       }
-      node.type.merge(propType);
-      selfType.addProperty(node.name, node.type);
+      node.mergeType(propType);
+      selfType.addProperty(node.name, node.getType());
     });
 
   const binary = makeTypeVisitor(
     'BinaryExpression', function binary(node) {
-      const objType = node.left.type.resolved();
+      const objType = node.left.getType().resolved();
       const propName = `operator${node.op}`;
       const prop = objType.getProperty(propName);
 
@@ -196,13 +196,13 @@ function inferVisitors(types, loadModule) {
       binaryType.merge(prop);
 
       objType.merge(binaryType.args[0]);
-      node.right.type.merge(binaryType.args[1]);
-      node.type.merge(binaryType.args[2]);
+      node.right.mergeType(binaryType.args[1]);
+      node.mergeType(binaryType.args[2]);
     });
 
   function derefType(node) {
     const propName = 'unary*';
-    const objType = node.type.resolved();
+    const objType = node.getType().resolved();
     const prop = objType.getProperty(propName);
     const unaryType = types.get('Function')
       .createInstance([ types.createUnknown(), types.createUnknown() ]);
@@ -213,22 +213,22 @@ function inferVisitors(types, loadModule) {
   const memberAccess = makeTypeVisitor(
     'MemberAccess', function memberAccess(node) {
       const objType = node.op === '->' ?
-        derefType(node.object) : node.object.type.resolved();
+        derefType(node.object) : node.object.getType().resolved();
       const selector = node.property;
       const propName = selector.name;
       const propType = objType.getProperty(propName);
       if (propType === undefined) {
         throw new Error(`${objType} has no property ${propName}`);
       }
-      selector.type.merge(propType);
+      selector.mergeType(propType);
 
       let resultType;
       if (node.op === '->') {
-        resultType = node.object.type.createInstance([ propType ]);
+        resultType = node.object.getType().createInstance([ propType ]);
       } else {
         resultType = propType;
       }
-      node.type.merge(resultType);
+      node.mergeType(resultType);
     });
 
   const fcall = makeTypeVisitor(
@@ -238,23 +238,23 @@ function inferVisitors(types, loadModule) {
       let calleeType;
       if (callee.getNodeType() === 'Selector' && args.length > 0) {
         const obj = args[0];
-        const prop = obj.type.getProperty(callee.name);
+        const prop = obj.getType().getProperty(callee.name);
         if (prop) {
           calleeType = prop.resolved();
         }
       } else {
-        calleeType = callee.type.resolved();
+        calleeType = callee.getType().resolved();
       }
 
       const callType = types.get('Function')
         .createInstance(args.map(function(arg) {
-          return arg.type;
-        }).concat([ node.type ]));
+          return arg.getType();
+        }).concat([ node.getType() ]));
 
       callType.merge(calleeType);
 
       const retType = callType.args.slice(-1)[0];
-      node.type.merge(retType);
+      node.mergeType(retType);
     });
 
   return [

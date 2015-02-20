@@ -4,7 +4,10 @@
   "description": "",
   "main": "src/zoidberg.js",
   "scripts": {
+    "prepublish": "npm run grammar",
     "test": "mocha --harmony",
+    "grammar": "pegjs grammar/zoidberg.pegjs src/parser/_parser.js",
+    "watch-grammar": "fswatch -o grammar/zoidberg.pegjs | xargs -n1 -I{} npm run grammar",
     "lint": "jshint src"
   },
   "author": "Jan Krems <jan.krems@gmail.com>",
@@ -14,7 +17,8 @@
     "assertive": "^1.4.1",
     "bluebird": "^2.9.7",
     "jshint": "^2.6.0",
-    "mocha": "^2.1.0"
+    "mocha": "^2.1.0",
+    "pegjs": "^0.8.0"
   },
   "dependencies": {
     "debug": "^2.1.1",

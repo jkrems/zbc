@@ -2,7 +2,7 @@
 
 const Tokens = require('./tokens');
 const ZB = require('./nodes');
-// const TypeSystem = require('./type-system');
+const Scope = require('./scope');
 const registerBuiltIns = require('./built-ins');
 
 class LocationTracker {
@@ -22,6 +22,7 @@ class ParseState {
     this.idx = 0;
     this.next = tokens[0];
     this.noTry = false;
+    this.scope = new Scope(Scope.GLOBAL);
   }
 
   track() {
