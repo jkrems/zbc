@@ -1,8 +1,8 @@
 'use strict';
-var assert = require('assertive');
+const assert = require('assertive');
 
-var ZB = require('../../src/nodes');
-var parse = require('../../src/parser/index');
+const ZB = require('../../src/nodes');
+const parse = require('../../src/parser/index');
 
 function assertEmptyModule(ast) {
   assert.truthy(ast instanceof ZB.Module);
@@ -10,7 +10,7 @@ function assertEmptyModule(ast) {
   assert.deepEqual([], ast.imports);
 }
 
-describe.only('parse:empty', function() {
+describe('parse:empty', function() {
   it('parses to empty ZB.Module', function() {
     assertEmptyModule(parse(''));
   });
@@ -24,7 +24,7 @@ describe.only('parse:empty', function() {
   });
 
   it('does not accept tabs', function() {
-    var err = assert.throws(function() { parse('\t'); });
+    const err = assert.throws(function() { parse('\t'); });
     assert.equal('SyntaxError', err.name);
     assert.equal('Tabs aren\'t valid whitespace in Zoidberg', err.message);
   });
