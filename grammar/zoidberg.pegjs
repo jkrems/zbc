@@ -33,11 +33,64 @@ Module
   }
 
 Declaration
-  = Comment
+  = FunctionDeclaration
 
 Declarations
   = first:Declaration rest:(__ Declaration)* {
     return buildList(first, rest, 1);
+  }
+
+/**
+ * Statements & Expressions
+ */
+
+Expression
+  = Literal
+
+Statement
+  = expr:Expression _ ";" { return expr; }
+
+Block
+  = "{" __ stmts:Statement* __ "}" {
+    switch (stmts.length) {
+      case 0: return new ZB.Empty();
+      case 1: return stmts[0];
+      default:
+        error('Multi-statement not implemented');
+    }
+  }
+
+/**
+ * Literals and Values
+ */
+
+DecimalDigit = [0-9]
+
+HexDigit = DecimalDigit / [a-fA-F]
+
+Integer
+  = "0x" hexStr:$([1-9a-fA-F] HexDigit*) { return parseInt(hexStr, 16); }
+  / "0" { return 0; }
+  / str:$([1-9] DecimalDigit*) { return parseInt(str, 10); }
+
+Literal
+  = i:Integer { return new ZB.Literal(i, 'Int'); }
+
+/**
+ * Function Declaration (and Lambda)
+ */
+
+FunctionDeclaration
+  = name:Identifier __ "(" __ params:ParameterList? __ ")" __ body:Block {
+    return new ZB.FunctionDeclaration(name, params || [], body, null, null);
+  }
+
+Parameter
+  = Identifier
+
+ParameterList
+  = first:Parameter rest:(__ "," __ Parameter)* {
+    return buildList(first, rest, 3);
   }
 
 /**
