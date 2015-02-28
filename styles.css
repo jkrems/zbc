@@ -1,0 +1,42 @@
+body {
+    font-family: 'Actor', sans-serif;
+    margin: 0;
+    padding: 0;
+    margin-bottom: 200px;
+}
+
+h1 {
+    text-align: center;
+    line-height: 300px;
+    font-size: 3em;
+    background-image: linear-gradient(to bottom, #e34539 0%,#ff7068 100%); /* W3C */;
+    color: #fff;
+    text-shadow: -1px -1px 0px #611F1A;
+    text-transform: uppercase;
+}
+  
+section {
+    margin: 0 auto;
+    width: 800px;
+}
+
+pre {
+    padding: 10px;
+    background-color: #f2f2f2;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+pre, code, tt, kbd {
+    font-family: Menlo, monospace;
+}
+ 
+h2 {
+    font-size: 2em;
+    line-height: 2em;
+}
+  
+p {
+    font-size: 16px;
+}

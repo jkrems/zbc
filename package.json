@@ -1,0 +1,18 @@
+{
+  "name": "about-zoidberg-website",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "browserify browser.js -o bundle.js",
+    "watch": "watchify browser.js -o bundle.js"
+  },
+  "author": "Jan Krems <jan.krems@gmail.com>",
+  "dependencies": {
+    "browserify": "^8.1.1",
+    "highlight.js": "^8.4.0",
+    "marked": "^0.3.2",
+    "watchify": "^2.2.1"
+  }
+}

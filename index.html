@@ -1,0 +1,39 @@
+<html>
+<head>
+  <title>Zoidberg - C++ Syntax w/ JavaScript Semantics</title>
+  <link href="http://fonts.googleapis.com/css?family=Actor" rel="stylesheet" type="text/css">
+  <link href="styles.css" rel="stylesheet" type="text/css">
+  <link href="mono-blue.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<h1>Why Not Pointers..?</h1>
+<section>
+## Familiar Syntax
+
+It's the syntax you love, reimagined for the most advanced runtime available today.
+A simple example:
+
+```cs
+greet(userId) {
+  user = db.getUser(userId);
+  return "Hello \{user-&gt;name}!";
+}
+
+process.stdout &lt;&lt; *greet("alex") &lt;&lt; '\n';
+```
+
+This compiles to the following ES6 code:
+
+```js
+async function greet(userId) {
+  const user = db.getUser(userId);
+  return `Hello ${(await user).name}`;
+}
+
+greet("alex").then((a$) =&gt; console.log(a$));
+```
+</section>
+<script src="bundle.js"></script>
+</body>
+</html>
+
