@@ -51,7 +51,7 @@ function rParen() { return [ Tokens.RPAREN, ')' ]; }
 function lBrace() { return [ Tokens.LBRACE, '{' ]; }
 function rBrace() { return [ Tokens.RBRACE, '}' ]; }
 
-describe('scan', function() {
+xdescribe('scan', function() {
   it('scans an empty string to an empty list', tokenized``);
 
   it('scans an identifier', tokenized`${id('x')}x`);

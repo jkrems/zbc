@@ -8,7 +8,7 @@ const assert = require('assertive');
 
 const zb = require('../..');
 
-describe('js', function() {
+xdescribe('js', function() {
   it('len.zb', function() {
     const source = `
 main(argv) {

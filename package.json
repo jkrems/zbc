@@ -5,10 +5,12 @@
   "main": "src/zoidberg.js",
   "scripts": {
     "prepublish": "npm run grammar",
+    "pretest": "npm run grammar && jshint src",
     "test": "mocha --harmony",
     "grammar": "pegjs grammar/zoidberg.pegjs src/parser/_parser.js",
-    "watch-grammar": "fswatch -o grammar/zoidberg.pegjs | xargs -n1 -I{} npm run grammar",
-    "lint": "jshint src"
+    "watch-grammar": "nodemon -w grammar/zoidberg.pegjs -x npm run grammar",
+    "watch-test": "nodemon -w src -w test -x mocha --harmony",
+    "watch": "npm run watch-grammar & npm run watch-test & wait"
   },
   "author": "Jan Krems <jan.krems@gmail.com>",
   "license": "MIT",
@@ -18,6 +20,7 @@
     "bluebird": "^2.9.7",
     "jshint": "^2.6.0",
     "mocha": "^2.1.0",
+    "nodemon": "^1.3.7",
     "pegjs": "^0.8.0"
   },
   "dependencies": {

@@ -6,7 +6,7 @@ const assert = require('assertive');
 const scan = require('../src/scan');
 const parse = require('../src/parser');
 
-describe('parse', function() {
+xdescribe('parse', function() {
   describe('Hello World', function() {
     before(function() {
       this.tokens = scan(`

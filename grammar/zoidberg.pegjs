@@ -45,7 +45,61 @@ Declarations
  */
 
 Expression
+  = BinaryExpression
+
+BinaryOperator
+  = "<<"
+  / ">>"
+  / [+/*<>-]
+
+BinaryExpression
+  = first:MemberAccess rest:(__ BinaryOperator __ MemberAccess)* {
+    const ops = extractList(rest, 1);
+    const operands = extractList(rest, 3);
+    return operands.reduce(function(left, right, idx) {
+      return new ZB.BinaryExpression(left, ops[idx], right);
+    }, first);
+  }
+
+MemberAccess
+  = first:FCallExpression rest:("." PropertyExpression)* {
+    const chain = buildList(first, rest, 1);
+    return chain.reduce(function(left, prop) {
+      if (prop instanceof ZB.FCallExpression) {
+        prop.args.unshift(left);
+        return prop;
+      } else {
+        return new ZB.MemberAccess(left, '.', prop);
+      }
+    });
+  }
+
+PropertyExpression
+  = prop:Identifier args:CallArgs? {
+    const selector = new ZB.Identifier(prop);
+    if (args) {
+      return new ZB.FCallExpression(selector, args);
+    }
+    return selector;
+  }
+
+CallArgs
+  = "(" __ ")" { return []; }
+  / "(" __ first:Expression rest:(__ "," __ Expression)* __ ")" {
+    return buildList(first, rest, 3);
+  }
+
+FCallExpression
+  = callee:ValueExpression args:CallArgs? {
+    if (args) {
+      return new ZB.FCallExpression(callee, args);
+    }
+    return callee;
+  }
+
+ValueExpression
   = Literal
+  / id:Identifier { return new ZB.Identifier(id); }
 
 Statement
   = expr:Expression _ ";" { return expr; }

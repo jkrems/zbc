@@ -3,7 +3,7 @@ const assert = require('assertive');
 
 const preprocess = require('../../src/prezbc');
 
-describe('preprocess: #include', function() {
+xdescribe('preprocess: #include', function() {
   it('replaces local includes', function() {
     const loader = {
       loadLocal(filename) {

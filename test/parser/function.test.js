@@ -24,16 +24,62 @@ describe('parse/Function', function() {
     assert.equal('Int', f.body.typeName);
   });
 
-  it.only('parses an explicit return of a static function call', function() {
-    const ast = parse('f() { return b(); }');
-    const f = this.ast.body[0];
-    const ret = f.body;
-    assert.equal('Return', ret.getNodeType());
-    const fcall = ret.value;
+  it('parses a static function call', function() {
+    const ast = parse('f() { b(); }');
+    const f = ast.body[0];
+    const fcall = f.body;
+    assert.truthy('fcall instanceof FCallExpression',
+      fcall instanceof ZB.FCallExpression);
     assert.equal(0, fcall.args.length);
+    assert.truthy('callee instanceof Identifier',
+      fcall.callee instanceof ZB.Identifier);
+    assert.equal('b', fcall.callee.name);
   });
 
-  describe('member call', function() {
+  it('parses a method call', function() {
+    const ast = parse('f() { x.b(); }');
+    const f = ast.body[0];
+    const fcall = f.body;
+    // FCallExpression(.b, [ x ]);
+    assert.truthy('fcall instanceof FCallExpression',
+      fcall instanceof ZB.FCallExpression);
+    assert.equal(1, fcall.args.length);
+    assert.equal('b', fcall.callee.name);
+    assert.equal('x', fcall.args[0].name);
+  });
+
+  it('parses a function call with arguments', function() {
+    const ast = parse('f() { b(42, 3); }');
+    const f = ast.body[0];
+    const fcall = f.body;
+    assert.truthy('fcall instanceof FCallExpression',
+      fcall instanceof ZB.FCallExpression);
+    assert.equal(2, fcall.args.length);
+    assert.equal('b', fcall.callee.name);
+    assert.equal(42, fcall.args[0].value);
+    assert.equal(3, fcall.args[1].value);
+  });
+
+  it('parses a method/function chain', function() {
+    const ast = parse('f() { F().bar.x(7).y; }');
+    const body = ast.body[0].body;
+    // Member(FCall(.x(Member(Fcall(.F), 'bar'), 7), 'y')
+    assert.truthy('body instanceof MemberAccess',
+      body instanceof ZB.MemberAccess);
+    assert.equal('y', body.property.name);
+    assert.truthy('body.object instanceof FCallExpression',
+      body.object instanceof ZB.FCallExpression);
+    assert.equal('x', body.object.callee.name);
+    assert.equal(2, body.object.args.length);
+    assert.equal(7, body.object.args[1].value);
+
+    // F().bar
+    const Fbar = body.object.args[0];
+    assert.equal('bar', Fbar.property.name);
+    assert.equal('F', Fbar.object.callee.name);
+  });
+
+  xdescribe('member call', function() {
     before(function() {
       this.ast = parse('f() { return a.b(); }');
       this.f = this.ast.body[0];
@@ -47,7 +93,7 @@ describe('parse/Function', function() {
     });
   });
 
-  describe('namespace call', function() {
+  xdescribe('namespace call', function() {
     before(function() {
       this.ast = parse('f() { return a::b(); }');
       this.f = this.ast.body[0];
@@ -61,7 +107,7 @@ describe('parse/Function', function() {
     });
   });
 
-  describe('return value, explicit', function() {
+  xdescribe('return value, explicit', function() {
     before(function() {
       this.ast = parse(`f(): Int { 42; }`);
       this.body = this.ast.body;
