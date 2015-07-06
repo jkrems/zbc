@@ -9,7 +9,7 @@ function parsedBody(inner) {
   return ast.body[0].body;
 }
 
-describe.only('parse/Operators', function() {
+describe('parse/Operators', function() {
   it('parses an addition', function() {
     const body = parsedBody('7 + 9;');
     assert.truthy('body instanceof BinaryExpression',

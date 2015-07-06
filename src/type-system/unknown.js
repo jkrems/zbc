@@ -52,7 +52,9 @@ class UnknownType {
     if (this.actual !== null) {
       return this.actual.createInstance(args);
     }
-    if (!args || args.length === 0) return this;
+    if (!args || args.length === 0) {
+      return this;
+    }
     throw new Error(`Can't create instance of unknown type ${this}`);
   }
 

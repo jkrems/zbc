@@ -2,7 +2,7 @@
  * Zoigberg Grammar
  */
 {
-  var ZB = require('../nodes');
+  var ZB = require('../src/nodes');
 
   function extractList(list, index) {
     var result = new Array(list.length), i;

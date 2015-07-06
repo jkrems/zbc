@@ -7,7 +7,7 @@ const debug = require('debug')('zoidberg:zoidberg');
 
 const TypeSystem = require('./type-system');
 const _preprocess = require('./prezbc');
-const _lex = require('./scan')
+const _lex = require('./scan');
 const _parse = require('./parser');
 const _infer = require('./infer');
 const _toJS = require('./backend/js');

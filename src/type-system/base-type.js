@@ -3,7 +3,9 @@
 const UnknownType = require('./unknown');
 
 function prepareArgs(args) {
-  if (!args) return undefined;
+  if (!args) {
+    return undefined;
+  }
   if (!Array.isArray(args)) {
     throw new TypeError(`Invalid type args: ${args} (${typeof args}`);
   }

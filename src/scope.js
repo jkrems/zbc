@@ -18,3 +18,4 @@ const SCOPE_KINDS = [
 
 module.exports = Scope;
 module.exports.default = Scope;
+module.exports.SCOPE_KINDS = SCOPE_KINDS;

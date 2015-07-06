@@ -1,7 +1,5 @@
 'use strict';
 
-const TypeSystem = require('../type-system');
-
 function walkTree(node, visitors) {
   visitors.forEach(function(visitor) {
     if (typeof visitor.enter === 'function' && visitor.accept(node)) {
@@ -35,7 +33,7 @@ function makeTypeVisitor(nodeType, leave, enter) {
 
 const bubbleAssign = makeTypeVisitor(
   'Assignment', function bubbleAssign(node) {
-    const idType = node.mergeType(node.value.getType());
+    /* const idType = */ node.mergeType(node.value.getType());
     // TODO: store idType in scope..?
     node.target.mergeType(node.getType());
   });
@@ -81,7 +79,9 @@ function inferVisitors(types, loadModule) {
 
   const mergeReturnTypes = makeTypeVisitor(
     'FunctionDeclaration', function mergeReturnTypes(node) {
-      if (node.body === null) return;
+      if (node.body === null) {
+        return;
+      }
 
       const retType = node.getReturnType();
       node.body.mergeType(retType);

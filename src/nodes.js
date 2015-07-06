@@ -102,18 +102,17 @@ class Node {
 }
 
 _.each(NODE_SPEC, function(fields, name) {
-  exports[name] = function() {
-    Node.call(this);
-    let idx = 0;
-    for (let field of fields) {
-      this.setAttribute(field, arguments[idx++]);
+  class __Node extends Node {
+    constructor() {
+      super();
+      let idx = 0;
+      for (let field of fields) {
+        this.setAttribute(field, arguments[idx++]);
+      }
+      this._nodeType = name;
     }
-  };
-  exports[name].prototype = Object.create(Node.prototype, {
-    _nodeType: {
-      value: name
-    }
-  });
+  }
+  exports[name] = __Node;
 });
 
 exports.FunctionDeclaration.prototype.getReturnType =

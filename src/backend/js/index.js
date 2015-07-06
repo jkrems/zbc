@@ -182,11 +182,11 @@ const transforms = {
       leadingComments: [
         { value: ` global ${node.id.name} `}
       ]
-    }
+    };
   },
 
   FunctionDeclaration: function(node) {
-    const statements = node.body.map(function(expr, idx) {
+    const statements = node.body.map(function(expr) {
       if (expr.getNodeType() === 'Return') {
         return {
           type: 'ReturnStatement',
@@ -452,7 +452,7 @@ const transforms = {
     };
   },
 
-  InterfaceDeclaration: function(node) {
+  InterfaceDeclaration: function() {
     return { type: 'EmptyStatement', leadingComments: [] };
   }
 };

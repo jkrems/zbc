@@ -7,7 +7,7 @@ function registerBuiltIns(types) {
   // types.register('Char', []);
   // types.register('Float', []);
   // const Stream = types.register('Stream', []);
-  const Fn = types.register('Function');
+  /* const Fn = */ types.register('Function');
 
   // const t0 = types.createUnknown();
   // Arr.addProperty('unary*', Fn.createInstance([ Arr.createInstance([t0]), t0 ]));
