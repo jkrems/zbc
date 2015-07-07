@@ -12,6 +12,13 @@ test('Empty module', function(t) {
   t.end();
 });
 
+test('Reject tabs', function(t) {
+  t.throws(function() {
+    parse('\n\tf() {}');
+  }, /Tabs aren't valid whitespace/);
+  t.end();
+});
+
 test('Module with two minimal function declarations', function(t) {
   const ast = parse('f() {}\ng() {}');
   t.deepEqual(ast.imports, [], 'Has no imports');
