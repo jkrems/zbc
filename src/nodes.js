@@ -5,7 +5,6 @@ const _ = require('lodash');
 const UnknownType = require('./type-system/unknown');
 
 const NODE_SPEC = {
-  Module: [ 'imports', 'body' ],
   ExternDeclaration: [ 'id' ],
   TypeHint: [ 'name', 'args' ],
   FunctionDeclaration: [ 'name', 'params', 'body', 'visibility', 'returnHint' ],
@@ -100,6 +99,16 @@ class Node {
     }
   }
 }
+
+exports['Module'] = class Module extends Node {
+  constructor(imports, body) {
+    super();
+
+    this._nodeType = 'Module';
+    this.setAttribute('imports', imports);
+    this.setAttribute('body', body);
+  }
+};
 
 _.each(NODE_SPEC, function(fields, name) {
   class __Node extends Node {
