@@ -2,14 +2,14 @@
   "name": "zbc",
   "version": "1.0.0",
   "description": "",
-  "main": "src/zoidberg.js",
+  "main": "lib/zoidberg.js",
   "scripts": {
     "prepublish": "npm run grammar",
     "pretest": "npm run grammar && jshint lib",
     "test": "tape test/**/*.js",
     "grammar": "pegjs grammar/zoidberg.pegjs grammar/zoidberg.js",
     "watch-grammar": "nodemon -w grammar/zoidberg.pegjs -x npm run grammar",
-    "watch-test": "nodemon -w src -w test -x mocha --harmony",
+    "watch-test": "nodemon -w lib -w test -x mocha --harmony",
     "watch": "npm run watch-grammar & npm run watch-test & wait"
   },
   "author": "Jan Krems <jan.krems@gmail.com>",
