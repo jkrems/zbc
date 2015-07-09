@@ -23,5 +23,10 @@ process.stdin.on('data', function(chunk) {
   source += chunk.toString();
 });
 process.stdin.on('end', function() {
-  console.log(zb.zb2js(source, babelOpts).code);
+  try {
+    console.log(zb.zb2js(source, babelOpts).code);
+  } catch (err) {
+    console.error(err.message);
+    process.exit(1);
+  }
 });
