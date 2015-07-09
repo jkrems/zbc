@@ -134,6 +134,10 @@ AtomExpression
 
 Literal
   = StringLiteral
+  / NumberLiteral
+
+NumberLiteral
+  = n:([1-9] [0-9]+ / [0-9]) { return new ZB.Int32Literal(+n); }
 
 StringLiteralPart
   = text:([^"])+ { return { text: text.join('') }; }

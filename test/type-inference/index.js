@@ -3,15 +3,8 @@
 const test = require('tape');
 
 const infer = require('../..').infer;
-const TypeInstance = require('../../lib/types').TypeInstance;
 
-function checkType(t, node, expected) {
-  if (node.type.isA(expected)) {
-    t.pass(`Expected ${expected}, found ${node.type}`);
-  } else {
-    t.fail(`Expected ${expected}, found ${node.type}`);
-  }
-}
+const checkType = require('../util').checkType;
 
 test('Infer string literal and return type', function(t) {
   const f = infer('f() { "x"; }').body[0];
@@ -20,6 +13,17 @@ test('Infer string literal and return type', function(t) {
 
   checkType(t, str, Str.create());
   checkType(t, f, F.create([ Str.create() ]));
+
+  t.end();
+});
+
+test('Infer int32 literal and return type', function(t) {
+  const f = infer('f() { 42; }').body[0];
+  const n = f.body[0];
+  const Int32 = f.scope.get('Int32'), F = f.scope.get('Function');
+
+  checkType(t, n, Int32.create());
+  checkType(t, f, F.create([ Int32.create() ]));
 
   t.end();
 });

@@ -46,3 +46,13 @@ test('Function w/ a unary expression', function(t) {
   t.deepEqual(s.operand.textTokens, [ 'Quinn' ], 'Correct operand ("Quinn")');
   t.end();
 });
+
+test('Function w/ params', function(t) {
+  const ast = parse(
+`rect(width, height) {
+  "Rect";
+}`);
+  const f = ast.body[0];
+  t.equal(f.params.length, 2, 'Has two params');
+  t.end();
+});
