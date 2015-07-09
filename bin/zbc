@@ -1,0 +1,27 @@
+#!/usr/bin/env node
+'use strict';
+
+const babelOpts = {
+  "whitelist": [
+    "bluebirdCoroutines",
+    "strict",
+    "es6.arrowFunctions",
+    "es6.classes",
+    "es6.destructuring",
+    "es6.modules",
+    "es6.parameters",
+    "es6.spread",
+    "es7.asyncFunctions",
+    "es7.decorators"
+  ]
+};
+
+const zb = require('../');
+
+let source = '';
+process.stdin.on('data', function(chunk) {
+  source += chunk.toString();
+});
+process.stdin.on('end', function() {
+  console.log(zb.zb2js(source, babelOpts).code);
+});
