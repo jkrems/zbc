@@ -1,0 +1,23 @@
+'use strict';
+
+const test = require('tape');
+
+const infer = require('../..').infer;
+
+const checkType = require('../util').checkType;
+
+test('call function that returns an int', function(t) {
+  const ast = infer(`
+zero() { 0; }
+f() { zero(); }`);
+  const zero = ast.body[0], f = ast.body[1];
+
+  const F = ast.scope.get('Function');
+  const Int32 = ast.scope.get('Int32');
+
+  checkType(t, zero, F.create([ Int32.create() ]));
+  checkType(t, f.body[0].fn, F.create([ Int32.create() ]));
+  checkType(t, f, F.create([ Int32.create() ]));
+
+  t.end();
+});

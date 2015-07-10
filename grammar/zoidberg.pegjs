@@ -127,7 +127,18 @@ UnaryExpression
   }
 
 AccessExpression
-  = AtomExpression
+  = expr:AtomExpression call:ArgumentList? {
+    if (call) {
+      return new ZB.FunctionCall(expr, call);
+    }
+    return expr;
+  }
+
+ArgumentList
+  = "(" ")" { return []; }
+  / "(" __ first:Expression rest:(__ "," __ Expression)* __ ")" {
+    return buildList(first, rest, 3);
+  }
 
 AtomExpression
   = Literal
@@ -135,6 +146,12 @@ AtomExpression
 Literal
   = StringLiteral
   / NumberLiteral
+  / IdentifierReference
+
+IdentifierReference
+  = id:Identifier {
+    return new ZB.IdentifierReference(id);
+  }
 
 NumberLiteral
   = n:([1-9] [0-9]+ / [0-9]) { return new ZB.Int32Literal(+n); }
