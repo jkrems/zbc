@@ -21,3 +21,13 @@ f() { zero(); }`);
 
   t.end();
 });
+
+test('call with wrong param types', function(t) {
+  t.throws(function() {
+    infer(`
+main(argv) { &0; }
+f() { main("str"); }
+`);
+  }, /\(String\) -> Int32\* is not compatible with \(String\[\]\) -> Int32\*/);
+  t.end();
+});
