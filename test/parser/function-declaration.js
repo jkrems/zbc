@@ -66,3 +66,13 @@ test('Function w/ params and type hints', function(t) {
   t.equal(f.params.length, 2, 'Has two params');
   t.end();
 });
+
+test('Function w/ complex type hints', function(t) {
+  const ast = parse(
+`f(argv: Array<String>, nested: Array<Async<Int32>>): Async<Int32> {
+  &0;
+}`);
+  const f = ast.body[0];
+  t.equal(f.params.length, 2, 'Has two params');
+  t.end();
+});

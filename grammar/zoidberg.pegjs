@@ -86,8 +86,13 @@ TypeHintPostfix
   = _ ":" _ hint:TypeHint { return hint; }
 
 TypeHint
-  = name:Identifier {
-    return { name: name };
+  = name:Identifier args:TypeHintParams? {
+    return { name: name, args: args };
+  }
+
+TypeHintParams
+  = "<" first:TypeHint rest:(_ "," _ TypeHint)* ">" {
+    return buildList(first, rest, 3);
   }
 
 Block
