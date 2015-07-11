@@ -67,8 +67,9 @@ Declaration
  */
 
 FunctionDeclaration
-  = name:Identifier "(" params:ParameterList? ")" _ body:Block {
-    return new ZB.FunctionDeclaration(name, params || [], body);
+  = name:Identifier "(" params:ParameterList? ")" typeHint:TypeHintPostfix? _ body:Block {
+    return new ZB.FunctionDeclaration(
+      name, params || [], body, typeHint);
   }
 
 ParameterList
@@ -77,7 +78,17 @@ ParameterList
   }
 
 Parameter
-  = name:Identifier { return new ZB.Parameter(name); }
+  = name:Identifier typeHint:TypeHintPostfix? {
+    return new ZB.Parameter(name, typeHint);
+  }
+
+TypeHintPostfix
+  = _ ":" _ hint:TypeHint { return hint; }
+
+TypeHint
+  = name:Identifier {
+    return { name: name };
+  }
 
 Block
   = "{" __ body:Statements? __ "}" { return body || []; }

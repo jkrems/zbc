@@ -56,3 +56,13 @@ test('Function w/ params', function(t) {
   t.equal(f.params.length, 2, 'Has two params');
   t.end();
 });
+
+test('Function w/ params and type hints', function(t) {
+  const ast = parse(
+`rect(width: Int32, height: Int32): String {
+  "Rect";
+}`);
+  const f = ast.body[0];
+  t.equal(f.params.length, 2, 'Has two params');
+  t.end();
+});

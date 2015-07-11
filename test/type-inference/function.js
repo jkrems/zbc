@@ -22,3 +22,23 @@ f() { id("Q"); &id(0); }
   checkType(t, intCall, Async.create([ Int32.create() ]));
   t.end();
 });
+
+test('Function with type hints', function(t) {
+  const ast = infer(`
+f(n: Int32, name): String { name; }
+`);
+  const f = ast.body[0];
+  const nameRef = f.body[0];
+
+  const F = ast.scope.get('Function'),
+        Str = ast.scope.get('String'),
+        Int32 = ast.scope.get('Int32');
+
+  // return type propagates to nameRef
+  checkType(t, nameRef, Str.create());
+
+  // str <- (int32, str)
+  checkType(t, f, F.create([ Str.create(), Int32.create(), Str.create() ]));
+
+  t.end();
+});
