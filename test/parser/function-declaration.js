@@ -33,20 +33,6 @@ test('Function w/ two string literals', function(t) {
   t.end();
 });
 
-test('Function w/ a unary expression', function(t) {
-  const ast = parse(
-`getName() {
-  &"Quinn";
-}`);
-  const f = ast.body[0];
-  t.equal(f.body.length, 1, 'Has one statement in body');
-  const s = f.body[0];
-  t.ok(s instanceof ZB.UnaryExpression, 'statement is a UnaryExpression');
-  t.equal(s.op, '&', 'Correct operator ("&")');
-  t.deepEqual(s.operand.textTokens, [ 'Quinn' ], 'Correct operand ("Quinn")');
-  t.end();
-});
-
 test('Function w/ params', function(t) {
   const ast = parse(
 `rect(width, height) {

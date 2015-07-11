@@ -138,7 +138,7 @@ MulExpression
   = UnaryExpression
 
 UnaryOperator "unary operator"
-  = [&]
+  = [&*]
 
 UnaryExpression
   = op:(UnaryOperator _)? operand:AccessExpression {

@@ -1,0 +1,7 @@
+readFile(filename, encoding) { &"Hello World!"; }
+
+main(argv) {
+  contents = readFile("my-file", "utf8");
+  puts(*contents);
+  &0;
+}

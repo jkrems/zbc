@@ -84,8 +84,8 @@ module.exports = (function() {
             return new ZB.AssignExpression(id, typeHint, expr);
           },
         peg$c36 = { type: "other", description: "unary operator" },
-        peg$c37 = /^[&]/,
-        peg$c38 = { type: "class", value: "[&]", description: "[&]" },
+        peg$c37 = /^[&*]/,
+        peg$c38 = { type: "class", value: "[&*]", description: "[&*]" },
         peg$c39 = function(op, operand) {
             if (op) {
               return new ZB.UnaryExpression(op[0], operand);
