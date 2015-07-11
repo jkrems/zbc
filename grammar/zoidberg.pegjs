@@ -110,6 +110,7 @@ Statement
  * ## Expressions
  *
  * Precendence:
+ * 0. AssignExpression (x = ...)
  * 1. ConcatExpression (++)
  * 2. SumExpression (+, -)
  * 3. MulExpression (*, /, %)
@@ -119,7 +120,13 @@ Statement
  */
 
 Expression
-  = ConcatExpression
+  = AssignExpression
+  / ConcatExpression
+
+AssignExpression
+  = id:Identifier typeHint:TypeHintPostfix? _ "=" __ expr:Expression {
+    return new ZB.AssignExpression(id, typeHint, expr);
+  }
 
 ConcatExpression
   = SumExpression
