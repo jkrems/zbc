@@ -174,6 +174,11 @@ AccessSelector
       return new ZB.StaticAccess(base, id);
     };
   }
+  / "[" __ expr:Expression __ "]" {
+    return function(base) {
+      return new ZB.IndexAccess(base, expr);
+    };
+  }
 
 ArgumentList
   = "(" ")" { return []; }

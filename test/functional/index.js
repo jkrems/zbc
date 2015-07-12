@@ -62,3 +62,10 @@ f() { ns::nested::f(); }`);
   t.equal(zbCtx.js('f();'), 'ok', 'f() === ns.nested.f() === "ok"');
   t.end();
 });
+
+test('Function that returns arr[0]', function(t) {
+  const zbCtx = new ZBContext();
+  zbCtx.zb('first(arr) { arr[0]; }');
+  t.equal(zbCtx.js('first(["ok"]);'), 'ok', 'first(["ok"]) === "ok"');
+  t.end();
+});

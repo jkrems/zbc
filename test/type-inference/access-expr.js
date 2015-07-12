@@ -44,3 +44,15 @@ f() { ns::zero(); }`);
 
   t.end();
 });
+
+test('arr[0]', function(t) {
+  const ast = infer('f(arr: Array<Int32>) { arr[0]; }')
+  const f = ast.body[0], indexAccess = f.body[0];
+
+  const F = ast.scope.get('Function'),
+        Int32 = ast.scope.get('Int32'),
+        Arr = ast.scope.get('Array');
+  checkType(t, f, F.create([ Int32.create(), Arr.create([ Int32.create() ]) ]));
+
+  t.end();
+});

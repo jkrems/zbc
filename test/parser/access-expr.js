@@ -20,3 +20,11 @@ test('ns::f', function(t) {
   t.equal(staticAccess.field, 'f', 'Selects "::f"');
   t.end();
 });
+
+test('arr[0]', function(t) {
+  const f = parse('f() { arr[0]; }').body[0];
+  const staticAccess = f.body[0];
+  t.equal(staticAccess.base.id, 'arr', 'Refers to "arr"');
+  t.equal(staticAccess.index.value, 0, 'Selects index 0');
+  t.end();
+});
