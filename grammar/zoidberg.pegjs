@@ -50,6 +50,7 @@ Imports
  *
  * 1. Function Declaration
  * 2. Value Declaration
+ * 3. Namespace containing declarations
  *
  * They can appear in any order in the module.
  */
@@ -60,7 +61,13 @@ Declarations
   }
 
 Declaration
-  = FunctionDeclaration
+  = NamespaceDeclaration
+  / FunctionDeclaration
+
+NamespaceDeclaration
+  = "namespace" _ name:Identifier _ "{" __ body:Declarations? __ "}" {
+    return new ZB.NamespaceDeclaration(name, body || []);
+  }
 
 /**
  * #### FunctionDeclaration
