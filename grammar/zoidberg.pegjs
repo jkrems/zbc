@@ -203,11 +203,18 @@ AtomExpression
 Literal
   = StringLiteral
   / NumberLiteral
+  / ArrayLiteral
   / IdentifierReference
 
 IdentifierReference
   = id:Identifier {
     return new ZB.IdentifierReference(id);
+  }
+
+ArrayLiteral
+  = "[" "]" { return new ZB.ArrayLiteral([]); }
+  / "[" __ first:Expression rest:(__ "," __ Expression)* __ "]" {
+    return new ZB.ArrayLiteral(buildList(first, rest, 3));
   }
 
 NumberLiteral

@@ -12,3 +12,12 @@ test('Integer literals', function(t) {
   });
   t.end();
 });
+
+test('Array literals', function(t) {
+  const ast = parse(`f() { [ 0, 2 ]; }`);
+  const literal = ast.body[0].body[0];
+  t.deepEqual(literal.elements.map(function(el) {
+    return el.value;
+  }), [ 0, 2 ], 'Parses [ 0, 2 ]');
+  t.end();
+});

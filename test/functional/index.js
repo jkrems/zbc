@@ -65,7 +65,7 @@ f() { ns::nested::f(); }`);
 
 test('Function that returns arr[0]', function(t) {
   const zbCtx = new ZBContext();
-  zbCtx.zb('first(arr) { arr[0]; }');
-  t.equal(zbCtx.js('first(["ok"]);'), 'ok', 'first(["ok"]) === "ok"');
+  zbCtx.zb('first() { arr = [ "ok", "not ok" ]; arr[0]; }');
+  t.equal(zbCtx.js('first();'), 'ok', 'first() === "ok"');
   t.end();
 });
