@@ -28,3 +28,11 @@ test('arr[0]', function(t) {
   t.equal(staticAccess.index.value, 0, 'Selects index 0');
   t.end();
 });
+
+test('obj.prop', function(t) {
+  const f = parse('f() { obj.prop; }').body[0];
+  const propertyRead = f.body[0];
+  t.equal(propertyRead.base.id, 'obj', 'Refers to "obj"');
+  t.equal(propertyRead.field, 'prop', 'Selects ".prop"');
+  t.end();
+});

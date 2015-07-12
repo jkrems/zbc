@@ -69,3 +69,10 @@ test('Function that returns arr[0]', function(t) {
   t.equal(zbCtx.js('first();'), 'ok', 'first() === "ok"');
   t.end();
 });
+
+test('Function that returns str.length', function(t) {
+  const zbCtx = new ZBContext();
+  zbCtx.zb('len(str: String) { str.length; }');
+  t.equal(zbCtx.js('len("ok");'), 2, 'len("ok") === 2');
+  t.end();
+});

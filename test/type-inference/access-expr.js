@@ -3,6 +3,7 @@
 const test = require('tape');
 
 const infer = require('../..').infer;
+const TypeVariable = require('../../lib/types').TypeVariable;
 
 const checkType = require('../util').checkType;
 
@@ -53,6 +54,41 @@ test('arr[0]', function(t) {
         Int32 = ast.scope.get('Int32'),
         Arr = ast.scope.get('Array');
   checkType(t, f, F.create([ Int32.create(), Arr.create([ Int32.create() ]) ]));
+
+  t.end();
+});
+
+test('str.length', function(t) {
+  const ast = infer('f(str: String) { str.length; }')
+  const f = ast.body[0], propRead = f.body[0];
+
+  const F = ast.scope.get('Function'),
+        Int32 = ast.scope.get('Int32'),
+        Str = ast.scope.get('String');
+  checkType(t, f, F.create([ Int32.create(), Str.create() ]));
+
+  t.end();
+});
+
+test('obj.prop', function(t) {
+  const ast = infer('f(obj) { obj.prop; }');
+  const f = ast.body[0], propRead = f.body[0];
+
+  const F = ast.scope.get('Function'),
+        a = new TypeVariable(),
+        b = new TypeVariable();
+  a.fields.set('prop', b);
+
+  const expected = F.create([ b, a ]).toString();
+  t.equal(f.type.toString(), expected,
+    `has type signature ${expected}`);
+
+  t.test('with incompatible type', function(t) {
+    t.throws(function() {
+      const ast = infer('f(x) { x.length; } g() { f(0); }');
+    }, /Field not supported: length/, 'complains that field is not supported');
+    t.end();
+  });
 
   t.end();
 });

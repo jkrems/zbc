@@ -190,6 +190,11 @@ AccessSelector
       return new ZB.IndexAccess(base, expr);
     };
   }
+  / "." id:Identifier {
+    return function(base) {
+      return new ZB.PropertyRead(base, id);
+    };
+  }
 
 ArgumentList
   = "(" ")" { return []; }
