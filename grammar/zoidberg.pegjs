@@ -17,6 +17,17 @@
   function buildList(first, rest, index) {
     return [first].concat(extractList(rest, index));
   }
+
+  function flatten(arr) {
+    return arr.reduce(function(out, el) {
+      return out.concat(Array.isArray(el) ? flatten(el) : [ el ]);
+    }, []);
+  }
+
+  function toFlatArray(arr) {
+    if (!Array.isArray(arr)) { return [ arr ]; }
+    return flatten(arr);
+  }
 }
 
 /**
@@ -200,7 +211,9 @@ IdentifierReference
   }
 
 NumberLiteral
-  = n:([1-9] [0-9]+ / [0-9]) { return new ZB.Int32Literal(+n); }
+  = n:([1-9] [0-9]+ / [0-9]) {
+    return new ZB.Int32Literal(+toFlatArray(n).join(''));
+  }
 
 StringLiteralPart
   = text:([^"])+ { return { text: text.join('') }; }

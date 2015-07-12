@@ -132,7 +132,9 @@ module.exports = (function() {
         peg$c56 = { type: "class", value: "[1-9]", description: "[1-9]" },
         peg$c57 = /^[0-9]/,
         peg$c58 = { type: "class", value: "[0-9]", description: "[0-9]" },
-        peg$c59 = function(n) { return new ZB.Int32Literal(+n); },
+        peg$c59 = function(n) {
+            return new ZB.Int32Literal(+toFlatArray(n).join(''));
+          },
         peg$c60 = /^[^"]/,
         peg$c61 = { type: "class", value: "[^\"]", description: "[^\"]" },
         peg$c62 = function(text) { return { text: text.join('') }; },
@@ -1895,6 +1897,17 @@ module.exports = (function() {
 
       function buildList(first, rest, index) {
         return [first].concat(extractList(rest, index));
+      }
+
+      function flatten(arr) {
+        return arr.reduce(function(out, el) {
+          return out.concat(Array.isArray(el) ? flatten(el) : [ el ]);
+        }, []);
+      }
+
+      function toFlatArray(arr) {
+        if (!Array.isArray(arr)) { return [ arr ]; }
+        return flatten(arr);
       }
 
 
