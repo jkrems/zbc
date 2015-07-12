@@ -2,15 +2,21 @@
 
 var _bluebird = require("bluebird");
 
-let readFile = _bluebird.coroutine(function* (filename, encoding) {
-  return Promise.resolve("Hello World!");
-});
-
 let main = _bluebird.coroutine(function* (argv) {
-  const contents = (0, readFile)("my-file", "utf8");
+  const contents = (0, fs.readFile)("my-file", "utf8");
   (0, puts)((yield contents));
   return Promise.resolve(0);
 });
+
+const fs = (function () {
+  let readFile = _bluebird.coroutine(function* (filename, encoding) {
+    return Promise.resolve("Hello World!");
+  });
+
+  return {
+    readFile
+  };
+})();
 
 if (module === require.main) {
   new Promise(function (resolve) {

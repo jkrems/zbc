@@ -57,7 +57,8 @@ namespace ns {
   namespace nested {
     f() { "ok"; }
   }
-}`);
-  t.equal(zbCtx.js('(0, ns.nested.f)();'), 'ok', 'ns.nested.f() === "ok"');
+}
+f() { ns::nested::f(); }`);
+  t.equal(zbCtx.js('f();'), 'ok', 'f() === ns.nested.f() === "ok"');
   t.end();
 });
