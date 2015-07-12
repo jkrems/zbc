@@ -1,7 +1,9 @@
-readFile(filename, encoding) { &"Hello World!"; }
+namespace fs {
+  readFile(filename, encoding) { &"Hello World!"; }
+}
 
 main(argv) {
-  contents = readFile("my-file", "utf8");
+  contents = fs::readFile("my-file", "utf8");
   puts(*contents);
   &0;
 }

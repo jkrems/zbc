@@ -29,7 +29,7 @@ class ZBContext {
 
   js(source) {
     const result = vm.runInContext(source, this.ctx);
-    debug('Result:', result);
+    debug('eval(%j):', source, result);
     return result;
   }
 }
@@ -48,4 +48,16 @@ test('Function that eventually returns "ok"', function(t) {
   zbCtx.js('f();').done(function(value) {
     t.equal(value, 'ok', 'f() === &"ok"');
   });
+});
+
+test('Function in nested namespace', function(t) {
+  const zbCtx = new ZBContext();
+  zbCtx.zb(`
+namespace ns {
+  namespace nested {
+    f() { "ok"; }
+  }
+}`);
+  t.equal(zbCtx.js('(0, ns.nested.f)();'), 'ok', 'ns.nested.f() === "ok"');
+  t.end();
 });
