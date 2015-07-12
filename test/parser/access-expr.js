@@ -12,3 +12,11 @@ test('fn(x, 3)', function(t) {
   t.equal(fcall.args[1].value, 3, 'Second argument is 3');
   t.end();
 });
+
+test('ns::f', function(t) {
+  const f = parse('f() { ns::f; }').body[0];
+  const staticAccess = f.body[0];
+  t.equal(staticAccess.base.id, 'ns', 'Refers to "ns"');
+  t.equal(staticAccess.field, 'f', 'Selects "::f"');
+  t.end();
+});

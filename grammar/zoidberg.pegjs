@@ -157,11 +157,22 @@ UnaryExpression
   }
 
 AccessExpression
-  = expr:AtomExpression call:ArgumentList? {
-    if (call) {
-      return new ZB.FunctionCall(expr, call);
-    }
-    return expr;
+  = expr:AtomExpression access:AccessSelector* {
+    return access.reduce(function(base, selector) {
+      return selector(base);
+    }, expr);
+  }
+
+AccessSelector
+  = args:ArgumentList {
+    return function(base) {
+      return new ZB.FunctionCall(base, args);
+    };
+  }
+  / "::" id:Identifier {
+    return function(base) {
+      return new ZB.StaticAccess(base, id);
+    };
   }
 
 ArgumentList
