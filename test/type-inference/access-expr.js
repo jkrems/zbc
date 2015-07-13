@@ -109,3 +109,15 @@ test('arr.push(42)', function(t) {
 
   t.end();
 });
+
+test('generic len, called with array', function(t) {
+  const ast = infer('len(x) { x.length } f() { len([ 2 ]) }');
+  const f = ast.body[1], lenCall = f.body[0];
+
+  const F = ast.scope.get('Function'),
+        Int32 = ast.scope.get('Int32');
+
+  // Array<T>.length is Int32, so f should return an Int32
+  checkType(t, f, F.create([ Int32.create() ]));
+  t.end();
+});

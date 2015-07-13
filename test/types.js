@@ -7,9 +7,25 @@ const types = require('../lib/types'),
       TypeVariable = types.TypeVariable;
 
 const Str = new Type('String', []),
-      Int32 = new Type('Int32', []);
+      Int32 = new Type('Int32', []),
+      F = new Type('Function');
 
 Int32.type.staticFields.set('MaxValue', Int32.create());
+
+test('Type.clone', function(t) {
+  const a = new TypeVariable(),
+        b = new TypeVariable();
+  a.fields.set('len', b);
+
+  const original = F.create([ b, a ]),
+        cloned = original.clone()
+
+  t.equal(original.toString(), 'Function<%a,%b.{len:%a}>',
+    'original has expected type');
+  t.equal(cloned.toString(), original.toString(),
+    'cloned has expected type');
+  t.end();
+});
 
 test('staticFields', function(t) {
   // inner{x}
@@ -19,7 +35,7 @@ test('staticFields', function(t) {
   t.test('nested type variables: outer -> inner{x} -> leaf', function(t) {
     const inner = new TypeVariable();
     inner.staticFields.set('x', Str.create());
-    t.equal(inner.toString(), '?{x:String}', 'appears when stringified');
+    t.equal(inner.toString(), '%a::{x:String}', 'appears when stringified');
 
     const leaf = new TypeVariable();
     inner.merge(leaf);
@@ -51,7 +67,7 @@ test('staticFields', function(t) {
   t.end();
 });
 
-test.only('fields of generic type', function(t) {
+test('fields of generic type', function(t) {
   // F<T>, Array<T> ::-> Every function definition *is* a type defintion
   // that defines a call operator.
   // Instantiating a function type ~= instantiating a generic type
