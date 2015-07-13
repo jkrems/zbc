@@ -17,17 +17,6 @@
   function buildList(first, rest, index) {
     return [first].concat(extractList(rest, index));
   }
-
-  function flatten(arr) {
-    return arr.reduce(function(out, el) {
-      return out.concat(Array.isArray(el) ? flatten(el) : [ el ]);
-    }, []);
-  }
-
-  function toFlatArray(arr) {
-    if (!Array.isArray(arr)) { return [ arr ]; }
-    return flatten(arr);
-  }
 }
 
 /**
@@ -122,7 +111,25 @@ Statements
   }
 
 Statement
-  = expr:Expression ";" { return expr; }
+  = expr:Expression StatementTerminator { return expr; }
+
+/**
+ * ### Automatic Semicolon Insertion
+ *
+ * It's valid to omit semicolons in certain situations:
+ *
+ * 1. Before a closing `}`, so `id(x) { x }` works
+ * 2. An immediate `\n` after a complete expression
+ *
+ * Example of rule 2:
+ *
+ *     aCall() # implicit `;`
+ *     [0] # implicit `;`
+ */
+StatementTerminator
+  = ";"
+  / & ( _ "}" )
+  / "\n"
 
 /**
  * ## Expressions
@@ -226,8 +233,8 @@ ArrayLiteral
   }
 
 NumberLiteral
-  = n:([1-9] [0-9]+ / [0-9]) {
-    return new ZB.Int32Literal(+toFlatArray(n).join(''));
+  = n:$([1-9] [0-9]+ / [0-9]) {
+    return new ZB.Int32Literal(+n);
   }
 
 StringLiteralPart

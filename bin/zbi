@@ -42,8 +42,7 @@ const r = repl.start({
         if (source[0] === '!') {
           const fnName = generateFunctionName();
           const result = zb.zb2js(`${fnName}() {
-${source.slice(1)}
-}`, options);
+${source.slice(1).trim()} }`, options);
           result.code += `; ${fnName}();`;
           return result;
         }

@@ -1,9 +1,9 @@
 namespace fs {
-  readFile(filename, encoding) { &"Hello World!"; }
+  readFile(filename, encoding) { &"Hello World!" }
 }
 
 main(argv) {
-  contents = fs::readFile("my-file", "utf8");
-  puts(*contents);
-  &0;
+  contents = fs::readFile(argv[0], "utf8")
+  puts(*contents)
+  &0
 }
