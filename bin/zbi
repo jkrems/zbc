@@ -1,0 +1,58 @@
+#!/usr/bin/env node
+'use strict';
+
+const repl = require('repl');
+const vm = require('vm');
+
+const Bluebird = require('bluebird');
+
+const zb = require('../');
+
+const options = {
+  babel: {
+    "whitelist": [
+      "bluebirdCoroutines",
+      "strict",
+      "es6.arrowFunctions",
+      "es6.classes",
+      "es6.destructuring",
+      "es6.modules",
+      "es6.parameters",
+      "es6.spread",
+      "es7.asyncFunctions",
+      "es7.decorators"
+    ]
+  }
+};
+
+const generateFunctionName = (function(){
+  let counter = 0;
+  return function() {
+    return `__repl${counter++}`;
+  };
+})();
+
+const r = repl.start({
+  prompt: '> ',
+  input: process.stdin,
+  output: process.stdout,
+  eval: function evalZoidberg(source, context, filename, callback) {
+    Bluebird
+      .try(function() {
+        if (source[0] === '!') {
+          const fnName = generateFunctionName();
+          const result = zb.zb2js(`${fnName}() {
+${source.slice(1)}
+}`, options);
+          result.code += `; ${fnName}();`;
+          return result;
+        }
+        return zb.zb2js(source, options);
+      })
+      .then(function(compiled) {
+        options.moduleScope = compiled.moduleScope;
+        return vm.runInContext(compiled.code, context);
+      })
+      .nodeify(callback);
+  }
+});

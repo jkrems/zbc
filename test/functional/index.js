@@ -7,25 +7,27 @@ const debug = require('debug')('zbc:test:functional');
 
 const zb2js = require('../..').zb2js;
 
-const babelOpts = {
-  "whitelist": [
-    "bluebirdCoroutines",
-    "strict",
-    "es6.arrowFunctions",
-    "es6.classes",
-    "es6.destructuring",
-    "es6.modules",
-    "es6.parameters",
-    "es6.spread",
-    "es7.asyncFunctions",
-    "es7.decorators"
-  ]
+const options = {
+  babel: {
+    "whitelist": [
+      "bluebirdCoroutines",
+      "strict",
+      "es6.arrowFunctions",
+      "es6.classes",
+      "es6.destructuring",
+      "es6.modules",
+      "es6.parameters",
+      "es6.spread",
+      "es7.asyncFunctions",
+      "es7.decorators"
+    ]
+  }
 };
 
 class ZBContext {
   constructor() { this.ctx = vm.createContext({ require: require }); }
 
-  zb(source) { return this.js(zb2js(source, babelOpts).code); }
+  zb(source) { return this.js(zb2js(source, options).code); }
 
   js(source) {
     const result = vm.runInContext(source, this.ctx);

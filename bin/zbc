@@ -1,19 +1,21 @@
 #!/usr/bin/env node
 'use strict';
 
-const babelOpts = {
-  "whitelist": [
-    "bluebirdCoroutines",
-    "strict",
-    "es6.arrowFunctions",
-    "es6.classes",
-    "es6.destructuring",
-    "es6.modules",
-    "es6.parameters",
-    "es6.spread",
-    "es7.asyncFunctions",
-    "es7.decorators"
-  ]
+const options = {
+  babel: {
+    "whitelist": [
+      "bluebirdCoroutines",
+      "strict",
+      "es6.arrowFunctions",
+      "es6.classes",
+      "es6.destructuring",
+      "es6.modules",
+      "es6.parameters",
+      "es6.spread",
+      "es7.asyncFunctions",
+      "es7.decorators"
+    ]
+  }
 };
 
 const zb = require('../');
@@ -24,7 +26,7 @@ process.stdin.on('data', function(chunk) {
 });
 process.stdin.on('end', function() {
   try {
-    console.log(zb.zb2js(source, babelOpts).code);
+    console.log(zb.zb2js(source, options).code);
   } catch (err) {
     console.error(err.message);
     process.exit(1);
