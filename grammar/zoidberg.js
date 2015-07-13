@@ -126,8 +126,11 @@ module.exports = (function() {
           },
         peg$c53 = ".",
         peg$c54 = { type: "literal", value: ".", description: "\".\"" },
-        peg$c55 = function(id) {
+        peg$c55 = function(id, args) {
             return function(base) {
+              if (args) {
+                return new ZB.MethodCall(base, id, args);
+              }
               return new ZB.PropertyRead(base, id);
             };
           },
@@ -1338,9 +1341,18 @@ module.exports = (function() {
             if (s1 !== peg$FAILED) {
               s2 = peg$parseIdentifier();
               if (s2 !== peg$FAILED) {
-                peg$reportedPos = s0;
-                s1 = peg$c55(s2);
-                s0 = s1;
+                s3 = peg$parseArgumentList();
+                if (s3 === peg$FAILED) {
+                  s3 = peg$c2;
+                }
+                if (s3 !== peg$FAILED) {
+                  peg$reportedPos = s0;
+                  s1 = peg$c55(s2, s3);
+                  s0 = s1;
+                } else {
+                  peg$currPos = s0;
+                  s0 = peg$c0;
+                }
               } else {
                 peg$currPos = s0;
                 s0 = peg$c0;

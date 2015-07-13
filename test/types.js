@@ -6,12 +6,12 @@ const types = require('../lib/types'),
       Type = types.Type,
       TypeVariable = types.TypeVariable;
 
+const Str = new Type('String', []),
+      Int32 = new Type('Int32', []);
+
+Int32.type.staticFields.set('MaxValue', Int32.create());
+
 test('staticFields', function(t) {
-  const Str = new Type('String', []),
-        Int32 = new Type('Int32', []);
-
-  Int32.type.staticFields.set('MaxValue', Int32.create());
-
   // inner{x}
   // inner{x} -> leaf
   // outer -> inner{x} -> leaf
@@ -47,6 +47,35 @@ test('staticFields', function(t) {
       'Merges static fields with the actual type');
     t.end();
   });
+
+  t.end();
+});
+
+test.only('fields of generic type', function(t) {
+  // F<T>, Array<T> ::-> Every function definition *is* a type defintion
+  // that defines a call operator.
+  // Instantiating a function type ~= instantiating a generic type
+
+  // Every type instance should get a view on type fields with type params
+  // replaced w/ args
+  const Either = new Type('Either', [ 'left', 'right' ]),
+        left = Either.param('left'), right = Either.param('right');
+
+  Either.fields.set('left', left);
+  Either.fields.set('right', right);
+
+  // It exposes type variables for left and right
+  t.ok(left instanceof TypeVariable, 'param("left") is a TypeVariable');
+  t.ok(right instanceof TypeVariable, 'param("right") is a TypeVariable');
+
+  const Int32OrStr = Either.create([ Int32.create(), Str.create() ]);
+
+  // It replaces the type variables without affecting the original
+  t.equal(Int32OrStr.fields.get('left').type, Int32, '.left: Int32');
+  t.equal(Int32OrStr.fields.get('right').type, Str, '.right: String');
+
+  // No mutation to original type variables
+  t.equal(left.getActual(), left, 'left is still unresolved');
 
   t.end();
 });

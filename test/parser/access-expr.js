@@ -36,3 +36,13 @@ test('obj.prop', function(t) {
   t.equal(propertyRead.field, 'prop', 'Selects ".prop"');
   t.end();
 });
+
+test('obj.method(42)', function(t) {
+  const f = parse('f(x) { obj.method(x, 42); }').body[0];
+  const propertyRead = f.body[0];
+  t.equal(propertyRead.base.id, 'obj', 'Refers to "obj"');
+  t.equal(propertyRead.field, 'method', 'Selects ".method"');
+  t.equal(propertyRead.args.length, 2, 'Calls with 2 arguments');
+  t.equal(propertyRead.args[1].value, 42, '2nd argument is 42');
+  t.end();
+});

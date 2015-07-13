@@ -92,3 +92,20 @@ test('obj.prop', function(t) {
 
   t.end();
 });
+
+test('arr.push(42)', function(t) {
+  const ast = infer('f(arr) { arr.push(42); }');
+  const f = ast.body[0], arrPush = f.body[0];
+
+  const F = ast.scope.get('Function'),
+        Int32 = ast.scope.get('Int32'),
+        a = new TypeVariable(),
+        b = new TypeVariable();
+  a.fields.set('push', F.create([ b, Int32.create() ]));
+
+  const expected = F.create([ b, a ]).toString();
+  t.equal(f.type.toString(), expected,
+    `has type signature ${expected}`);
+
+  t.end();
+});

@@ -76,3 +76,10 @@ test('Function that returns str.length', function(t) {
   t.equal(zbCtx.js('len("ok");'), 2, 'len("ok") === 2');
   t.end();
 });
+
+test('Pushing an element onto an array', function(t) {
+  const zbCtx = new ZBContext();
+  zbCtx.zb('push(arr, el) { arr.push(el); } f() { push([ 1, 3 ], 7); }');
+  t.equal(zbCtx.js('f();'), 3, 'f() === 3');
+  t.end();
+});
