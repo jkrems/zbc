@@ -39,17 +39,19 @@ const r = repl.start({
   eval: function evalZoidberg(source, context, filename, callback) {
     Bluebird
       .try(function() {
-        if (source[0] === '!') {
-          const fnName = generateFunctionName();
-          const result = zb.zb2js(`${fnName}() {
-${source.slice(1).trim()} }`, options);
-          result.code += `; ${fnName}();`;
-          return result;
-        }
         return zb.zb2js(source, options);
       })
+      .catch(function(err) {
+        const fnName = generateFunctionName();
+        const result = zb.zb2js(`${fnName}() {
+${source.trim()} }`, options);
+        const fnType = result.zbAst.body[0].type;
+        console.error(': %s', fnType.args[0]);
+        result.code += `; ${fnName}();`;
+        return result;
+      })
       .then(function(compiled) {
-        options.moduleScope = compiled.moduleScope;
+        options.moduleScope = compiled.zbAst.scope;
         return vm.runInContext(compiled.code, context);
       })
       .nodeify(callback);
