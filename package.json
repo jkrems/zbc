@@ -9,7 +9,7 @@
     "test": "tape test/**/*.js",
     "grammar": "pegjs grammar/zoidberg.pegjs grammar/zoidberg.js",
     "watch-grammar": "nodemon -w grammar/zoidberg.pegjs -x npm run grammar",
-    "watch-test": "nodemon -w lib -w test -x mocha --harmony",
+    "watch-test": "nodemon -w lib -w test -x npm run test",
     "watch": "npm run watch-grammar & npm run watch-test & wait"
   },
   "author": "Jan Krems <jan.krems@gmail.com>",

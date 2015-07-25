@@ -31,3 +31,15 @@ f(x: Async<Int32>) { y = *x; y; &0; }
   checkType(t, yRef, Int32.create());
   t.end();
 });
+
+test('Concatenation of two strings', function(t) {
+  const ast = infer(`
+f(x: String, y: String) { x ++ y }
+`);
+  const f = ast.body[0], concat = f.body[0];
+
+  const Str = ast.scope.get('String');
+
+  checkType(t, concat, Str.create());
+  t.end();
+});

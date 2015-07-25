@@ -17,6 +17,12 @@
   function buildList(first, rest, index) {
     return [first].concat(extractList(rest, index));
   }
+
+  function buildBinary(first, rest) {
+    return rest.reduce(function(left, element) {
+      return new ZB.MethodCall(left, 'operator' + element[1], [ element[3] ]);
+    }, first);
+  }
 }
 
 /**
@@ -154,19 +160,22 @@ AssignExpression
   }
 
 ConcatExpression
-  = SumExpression
+  = first:SumExpression rest:(__ "++" __ SumExpression)* {
+    return buildBinary(first, rest);
+  }
 
 SumExpression
-  = MulExpression
+  = first:MulExpression rest:(__ [+-] __ MulExpression)* {
+    return buildBinary(first, rest);
+  }
 
 MulExpression
-  = UnaryExpression
-
-UnaryOperator "unary operator"
-  = [&*]
+  = first:UnaryExpression rest:(__ [*/%] __ UnaryExpression)* {
+    return buildBinary(first, rest);
+  }
 
 UnaryExpression
-  = op:(UnaryOperator _)? operand:AccessExpression {
+  = op:([&*] _)? operand:AccessExpression {
     if (op) {
       return new ZB.UnaryExpression(op[0], operand);
     } else {

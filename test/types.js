@@ -4,23 +4,37 @@ const test = require('tape');
 
 const types = require('../lib/types'),
       Type = types.Type,
-      TypeVariable = types.TypeVariable;
+      TypeVariable = types.TypeVariable,
+      TypeParam = types.TypeParam;
 
 const Str = new Type('String', []),
       Int32 = new Type('Int32', []),
-      F = new Type('Function');
+      F = new Type('Function', []);
 
 Int32.type.staticFields.set('MaxValue', Int32.create());
 
-test('Type.clone', function(t) {
-  const a = new TypeVariable(),
-        b = new TypeVariable();
-  a.fields.set('len', b);
+test.only('Type.clone', function(t) {
+  const t1 = new TypeParam('t1'),
+        t2 = new TypeParam('t2');
+  t1.fields.set('len', t2);
 
-  const original = F.create([ b, a ]),
-        cloned = original.clone()
+  const F2 = F.derivedType([ t1, t2 ]),
+        instance = F2.create();
 
-  t.equal(original.toString(), 'Function<%a,%b.{len:%a}>',
+  t.equal(F2.toString(), 'Function<%a,%b.{len:%a}>',
+    'F2 has expected type');
+  t.equal(instance.toString(), F2.toString(),
+    'cloned has expected type');
+  t.end();
+});
+
+test('Type.clone with self-reference in field', function(t) {
+  Str.fields.set('toString', F.create([ Str.create() ]));
+
+  const original = Str.create(),
+        cloned = original.clone();
+
+  t.equal(original.toString(), 'String',
     'original has expected type');
   t.equal(cloned.toString(), original.toString(),
     'cloned has expected type');
